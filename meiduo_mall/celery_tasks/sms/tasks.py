@@ -2,10 +2,10 @@ from celery_tasks.main import celery_app
 from celery_tasks.yuntongxun.ccp_sms import CCP
 import logging
 
-logger = logging.getLogger('django')
+# logger = logging.getLogger('django')
 
 
-@celery_app.task(bind=True,name='ccp_send_sms_code', retry_backoff=3)
+@celery_app.task(bind=True,name='send_sms_code', retry_backoff=3)
 def ccp_send_sms_code(self, mobile, sms_code):
     """
     发送短信任务
@@ -18,7 +18,7 @@ def ccp_send_sms_code(self, mobile, sms_code):
         # 调用ccp()发送短信,并传递相关参数:
         result = CCP().send_template_sms(mobile, [sms_code, 5], 1)
     except Exception as e:
-        logger.error(e)
+        # logger.error(e)
 
         raise self.retry(exc=e, max_retries=3)
 

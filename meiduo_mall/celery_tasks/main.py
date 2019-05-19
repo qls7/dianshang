@@ -2,7 +2,7 @@ import os
 
 from celery import Celery
 
-os.environ.setdefault('DJANGO_SETINGS_MODULE','meiduo_mall.meiduo_mall.settings.dev')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE','meiduo_mall.settings.dev')
 
 celery_app = Celery('meido')
 
