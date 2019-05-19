@@ -1,6 +1,6 @@
 import re
 from django import http
-from django.contrib.auth import login
+from django.contrib.auth import login, authenticate
 from django.db import DatabaseError
 from django.shortcuts import render, redirect
 
@@ -11,6 +11,72 @@ from django_redis import get_redis_connection
 
 from meiduo_mall.utils.response_code import RETCODE
 from users.models import User
+
+
+class LogoutView(View):
+    """退出登录"""
+
+    def get(self, request):
+        """
+        实现退出登录逻辑
+        :param request:
+        :return:
+        """
+        
+
+class LoginView(View):
+    """用户名登录"""
+
+    def get(self, request):
+        """
+        提供登录的接口
+        :param request:
+        :return:
+        """
+        return render(request, 'login.html')
+
+    def post(self, request):
+        """
+        登录验证
+        :param request:
+        :return:
+        """
+        # 1.获取参数
+        username = request.POST.get('username')
+        password = request.POST.get('password')
+        remembered = request.POST.get('remembered')
+        # 2.校验参数
+        if not all([username, password]):
+            return http.HttpResponseForbidden('缺少必传参数')
+
+        if not re.match(r'^[a-zA-Z0-9_-]{5,20}$', username):
+            return http.HttpResponseForbidden('请输入正确的用户名或手机号')
+
+        if not re.match(r'^[0-9A-Za-z]{8,20}$', password):
+            return http.HttpResponseForbidden('密码最少8位,最长20位')
+        # 认证登录 用到authenticate方法
+        user = authenticate(username=username, password=password)
+        if user is None:
+            return render(request, 'login.html', {'account_errmsg': '用户名或密码错误'})
+
+        # 3.状态保持
+        login(request, user)
+
+        # 设置状态保持的周期
+        if remembered != 'on':
+            # 没勾选的情况下,把有效期改为0
+            request.session.set_expiry(0)
+        else:
+            # None代表两周后过期
+            request.session.set_expiry(None)
+        # 4.修改cookie
+        response = redirect(reverse('contents:index'))
+        # 讲用户名写入到cookie中,增加有效期
+        response.set_cookie('username', user.username, max_age=3600 * 12 * 15)
+
+        # 5.响应登录结果
+        # return redirect(reverse('contents:index'))
+        return response
 
 
 class MobileCountView(View):
@@ -90,11 +156,11 @@ class RegisterView(View):
         if sms_code_server is None:
             # 数据库不存在 验证码失效,返回注册页面
             # return http.HttpResponseForbidden('短信验证码已经失效')
-            return render(request,'register.html',{'sms_code_errmsg':'无效的验证码'})
+            return render(request, 'register.html', {'sms_code_errmsg': '无效的验证码'})
 
         if sms_code_client != sms_code_server:
             # return http.HttpResponseForbidden('短信验证码错误')
-            return render(request,'register.html',{'sms_code_errmsg':'输入的短信验证码有误'})
+            return render(request, 'register.html', {'sms_code_errmsg': '输入的短信验证码有误'})
 
         if allow != 'on':
             return http.HttpResponseForbidden('请勾选同意用户协议')
@@ -105,7 +171,13 @@ class RegisterView(View):
         except DatabaseError:
             return render(request, 'register.html', {'register_errmg': '注册失败'})
         # 实现状态保持,如果存入数据库成功的话
-        login(request, user)
+        login(request, user)  # 注意状态保持第一个参数必须是request
+
+        # 设定 session
+        response = redirect(reverse('contents:index'))
+        # 将用户名写入到cookie中
+        response.set_cookie('username', user.username, max_age=3600 * 12 * 15)
 
         # 4.进行返回 重定向首页
-        return redirect(reverse('contents:index'))
+        # return redirect(reverse('contents:index'))
+        return response

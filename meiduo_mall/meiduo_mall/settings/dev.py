@@ -220,3 +220,8 @@ LOGGING = {
 
 # 指定本项目用户模型类
 AUTH_USER_MODEL = 'users.User'
+
+# ########配置用户认证后端###############################################
+
+# 指定自定义的用户后端认证
+AUTHENTICATION_BACKENDS = ['users.utils.UsernameMobileAuthBackend']
