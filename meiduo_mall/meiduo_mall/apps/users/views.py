@@ -1,6 +1,6 @@
 import re
 from django import http
-from django.contrib.auth import login, authenticate
+from django.contrib.auth import login, authenticate, logout
 from django.db import DatabaseError
 from django.shortcuts import render, redirect
 
@@ -22,7 +22,17 @@ class LogoutView(View):
         :param request:
         :return:
         """
-        
+        # 清理 session
+        logout(request)
+        # 退出登录,重定向到登录页
+        response = redirect(reverse('contents:index'))
+
+        # 退出登录时 清除cookie中的username
+        response.delete_cookie('username')
+
+        # 返回响应
+        return response
+
 
 class LoginView(View):
     """用户名登录"""
