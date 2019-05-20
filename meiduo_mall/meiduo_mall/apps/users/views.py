@@ -3,14 +3,33 @@ from django import http
 from django.contrib.auth import login, authenticate, logout
 from django.db import DatabaseError
 from django.shortcuts import render, redirect
-
-# Create your views here.
 from django.urls import reverse
 from django.views import View
 from django_redis import get_redis_connection
-
 from meiduo_mall.utils.response_code import RETCODE
+from meiduo_mall.utils.views import LoginRequiredMixin
 from users.models import User
+
+
+# Create your views here.
+
+
+class UserInfoView(LoginRequiredMixin, View):
+    """用户中心"""
+
+    def get(self, request):
+        # 判断用户是否登录,登录了才能访问
+        # if request.user.is_authenticated():
+
+        # return render(request,'user_center_info.html')
+        # else:
+        # return render(request,'login.html')
+
+        # 一般不这么用,每个视图都要写,代码复用性太差,使用Mixin扩展类
+        # 1.在utils文件夹中创建views.py定义mixin扩展类专门用来验证用户的登录
+        # 2.继承mixin扩展类,即可拥有判断的权限
+        # 3.在login页面进行判断,如果有查询字符串则跳转到相应的页面
+        return render(request, 'user_center_info.html')
 
 
 class LogoutView(View):
@@ -79,8 +98,16 @@ class LoginView(View):
         else:
             # None代表两周后过期
             request.session.set_expiry(None)
+
+        # 进行判断是否携带有next的值,如果有进行跳转
+        next = request.GET.get('next')
+
+        if next:
+            response = redirect(next)
+        else:
+            response = redirect(reverse('contents:index'))
         # 4.修改cookie
-        response = redirect(reverse('contents:index'))
+
         # 讲用户名写入到cookie中,增加有效期
         response.set_cookie('username', user.username, max_age=3600 * 12 * 15)
 

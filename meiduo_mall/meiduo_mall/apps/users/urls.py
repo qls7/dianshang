@@ -3,7 +3,7 @@ from django.conf.urls import url
 from . import views
 
 urlpatterns = [
-    url(r'^register',views.RegisterView.as_view(),name='register'),
+    url(r'^register', views.RegisterView.as_view(), name='register'),
     # 判断用户名是否重复
     url(r'^usernames/(?P<username>\w{5,20})/count/$', views.UsernameCountView.as_view()),
     # 判断手机号是否重复
@@ -12,5 +12,7 @@ urlpatterns = [
     url(r'^login/$', views.LoginView.as_view(), name='login'),
     # 登出
     url(r'^logout/$', views.LogoutView.as_view(), name='logout'),
+    # 用户中心
+    url(r'^info/$', views.UserInfoView.as_view(), name='info'),
 
 ]

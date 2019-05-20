@@ -225,3 +225,8 @@ AUTH_USER_MODEL = 'users.User'
 
 # 指定自定义的用户后端认证
 AUTHENTICATION_BACKENDS = ['users.utils.UsernameMobileAuthBackend']
+
+# ########配置挑战页面###############################################
+
+# 配置登录跳转页面
+LOGIN_URL = '/login/'
