@@ -1,4 +1,3 @@
-import json
 
 import re
 from QQLoginTool.QQtool import OAuthQQ
@@ -48,20 +47,22 @@ class QQUserView(View):
             openid = oauth.get_open_id(access_token)
         except Exception as e:
             logger.error(e)
-            return http.HttpResponseServerError('OAuth2.0认证失败')
+            return http.HttpResponseServerError('获取openid失败')
         # 判断是否存在openid
         # openid是存在mysql里面的,OAuthQQUser表里面
         try:
-            user = OAuthQQUser.objects.get(openid=openid)
+            user_qq = OAuthQQUser.objects.get(openid=openid)
         except Exception as e:
+
             # 不存在的情况,加密后,传给前端
             access_token = general_access_token(openid)
             return render(request, 'oauth_callback.html', {'access_token': access_token})
         else:
             # 存在,保持状态,设置cookie,返回首页
-            login(request, user)
+            login(request, user_qq.user)
             response = redirect(reverse('contents:index'))
-            response.set_cookie('username', user.username, max_age=3600 * 24 * 15)
+            response.set_cookie('username', user_qq.user.username, max_age=3600 * 24 * 15)
+            return response
 
     def post(self, request):
         """
@@ -101,19 +102,19 @@ class QQUserView(View):
         openid = check_access_token(access_token)
         # 如果openid没有值,则验证失败
         if openid is None:
-            return http.HttpResponseForbidden('openid错误')
+            return http.HttpResponseForbidden('openid回传错误')
 
         # 保存openid
         try:
             user = User.objects.create_user(username=mobile, password=password, mobile=mobile)
         except Exception as e:
             logger.error(e)
-            return http.HttpResponseForbidden('OAuth2.0验证失败')
+            return http.HttpResponseForbidden('OAuth2.0验证失败:保存openid对应的user失败')
         try:
-            user_qq = OAuthQQUser.objects.create(openid=openid, user='users.User')
+            user_qq = OAuthQQUser.objects.create(openid=openid, user=user)
         except Exception as e:
             logger.error(e)
-            return http.HttpResponseForbidden('OAuth2.0验证失败')
+            return http.HttpResponseForbidden('OAuth2.0验证失败:保存openid失败')
         # 保持状态 修改cookie
         login(request, user_qq.user)
         response = redirect(reverse('contents:index'))

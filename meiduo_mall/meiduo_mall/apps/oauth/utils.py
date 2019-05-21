@@ -16,7 +16,6 @@ def general_access_token(openid):
     }
     # 加密完是二进制,要先进行解码
     access_token = serializer.dumps(data).decode()
-    print(access_token)
     return access_token
 
 
