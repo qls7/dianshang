@@ -9,14 +9,14 @@ def general_access_token(openid):
     :return:
     """
     # 先创建itsdangerous里面timeweb的对象
-    serializer = itsdangerous.TimedJSONWebSignatureSerializer(settings.SECRET_KEY, expires_in=300)
+    serializer = itsdangerous.TimedJSONWebSignatureSerializer(settings.SECRET_KEY, expires_in=3600)
     # 进行加密
     data = {
         'openid': openid
     }
     # 加密完是二进制,要先进行解码
     access_token = serializer.dumps(data).decode()
-
+    print(access_token)
     return access_token
 
 
@@ -26,7 +26,12 @@ def check_access_token(access_token):
     :param access_token:
     :return:
     """
-    serializer = itsdangerous.TimedJSONWebSignatureSerializer(settings.SECRET, expires_in=300)
-    openid = serializer.loads(access_token)
+    try:
+        serializer = itsdangerous.TimedJSONWebSignatureSerializer(settings.SECRET_KEY, expires_in=3600)
+        data = serializer.loads(access_token)
+    except Exception as e:
+        return None
+    else:
+        return data.get('openid')
 
-    return openid.get('openid')
+

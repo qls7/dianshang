@@ -5,12 +5,13 @@
     <title>美多商城-绑定用户</title>
     <link rel="stylesheet" type="text/css" href="{{ static('css/reset.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ static('css/main.css') }}">
+    <script type="text/javascript" src="{{ static('js/jquery-1.12.4.min.js') }}"></script>
     <script type="text/javascript" src="{{ static('js/host.js') }}"></script>
     <script type="text/javascript" src="{{ static('js/vue-2.5.16.js') }}"></script>
     <script type="text/javascript" src="{{ static('js/axios-0.18.0.min.js') }}"></script>
 </head>
 <body>
-    <div id="app">
+    <div id="app" v-cloak>
         <div>
             <div class="register_con">
                 <div class="l_con fl">
@@ -24,31 +25,47 @@
                         <h1>绑定用户</h1>
                     </div>
                     <div class="reg_form clearfix">
-                        <form id="reg_form" method="post">
+                        <form method="post" id="reg_form" @submit="on_submit">
+                {{ csrf_input }}
+                            <input v-model="access_token" type="hidden" name="access_token" value="{{ access_token }}">
                             <ul>
+                                 <li>
+     <label>手机号:</label>
+     <input type="text" v-model="mobile" @blur="check_phone" name="mobile" id="phone">
+     <span v-show="error_phone" class="error_tip">[[ error_phone_message ]]</span>
+</li>
                                 <li>
-                                    <label>手机号:</label>
-                                    <input type="text" name="mobile" id="phone">
-                                    <span class="error_tip">请输入正确的手机号码</span>
-                                </li>
+    <label>密码:</label>
+    <input type="password" v-model="password" @blur="check_pwd" name="password" id="pwd">
+    <span v-show="error_password" class="error_tip">密码最少8位，最长20位</span>
+    {% if account_errmsg %}
+        <span class="error_tip">{{ account_errmsg }}</span>
+    {% endif %}
+</li>
                                 <li>
-                                    <label>密码:</label>
-                                    <input type="password" name="pwd" id="pwd">
-                                    <span class="error_tip">请输入8-20位密码</span>
-                                </li>
+     <label>图形验证码:</label>
+     <input type="text" v-model="image_code" @blur="check_image_code" name="pic_code" id="pic_code" class="msg_input">
+     <img :src="image_code_url" @click="generate_image_code" alt="图形验证码" class="pic_code">
+     <span v-show="error_image_code" class="error_tip">[[ error_image_code_message ]]</span>
+</li>
                                 <li>
-                                    <label>图形验证码:</label>
-                                    <input type="text" name="pic_code" id="pic_code" class="msg_input">
-                                    <img src="../static/images/pic_code.jpg" alt="图形验证码" class="pic_code">
-                                    <span class="error_tip">请填写图形验证码</span>
-                                </li>
-                                <li>
-                                    <label>短信验证码:</label>
-                                    <input type="text" name="sms_code" id="msg_code" class="msg_input">
-                                    <a href="javascript:;" class="get_msg_code">获取短信验证码</a>
-                                    <span class="error_tip">请填写短信验证码</span>
-                                </li>
+    <label>短信验证码:</label>
+    <input type="text" v-model="sms_code" @blur="check_sms_code" name="sms_code"
+           id="msg_code" class="msg_input">
+    <a @click="send_sms_code" class="get_msg_code">[[ sms_code_tip ]]</a>
+    <span v-show="error_sms_code" class="error_tip">[[ error_sms_code_message ]]</span>
+    {% if sms_code_errmsg %}
+        <span class="error_tip">{{ sms_code_errmsg }}</span>
+    {% endif %}
+    {% if openid_errmsg %}
+        <span class="error_tip">{{ openid_errmsg }}</span>
+    {% endif %}
+    {% if qq_login_errmsg %}
+        <span class="error_tip">{{ qq_login_errmsg }}</span>
+    {% endif %}
+</li>
                                 <li class="reg_sub">
+                                    <input v-model="access_token" type="hidden" name="access_token" value="{{ access_token }}">
                                     <input type="submit" value="保 存" name="">
                                 </li>
                             </ul>
@@ -72,7 +89,11 @@
             </div>
         </div>
     </div>
-    <script type="text/javascript" src="{{ static('js/common.js') }}"></script>
-    <script type="text/javascript" src="{{ static('js/oauth_callback.js') }}"></script>
+    <script>
+    var access_token = "{{ access_token }}";
+</script>
+<script type="text/javascript" src="{{ static('js/common.js') }}"></script>
+
+    <script type="text/javascript" src="../static/js/oauth_callback.js"></script>
 </body>
 </html>

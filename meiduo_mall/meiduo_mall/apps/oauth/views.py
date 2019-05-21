@@ -41,12 +41,14 @@ class QQUserView(View):
             client_secret=settings.QQ_CLIENT_SECRET,
             redirect_uri=settings.QQ_REDIRECT_URI,
         )
-        # 获取access_token
-        access_token = oauth.get_access_token(code)
-        # 获取openid
-        openid = oauth.get_open_id(access_token)
-        # 连接数据库
-        redis_conn = get_redis_connection('verify_code')
+        try:
+            # 获取access_token
+            access_token = oauth.get_access_token(code)
+            # 获取openid
+            openid = oauth.get_open_id(access_token)
+        except Exception as e:
+            logger.error(e)
+            return http.HttpResponseServerError('OAuth2.0认证失败')
         # 判断是否存在openid
         # openid是存在mysql里面的,OAuthQQUser表里面
         try:
@@ -61,36 +63,40 @@ class QQUserView(View):
             response = redirect(reverse('contents:index'))
             response.set_cookie('username', user.username, max_age=3600 * 24 * 15)
 
-    def post(self,request):
+    def post(self, request):
         """
         用户绑定qq
         :param request:
         :return:
         """
         # 接受参数 表单传参
-        json_dict = json.loads(request.body.decode())
-        mobile = json_dict.get('mobile')
-        password = json_dict.get('password')
-        sms_code_client = json_dict.get('sms_code')
-        access_token = json_dict.get('access_token')
+        # json_dict = json.loads(request.body.decode())
+        # mobile = json_dict.get('mobile')
+        # password = json_dict.get('password')
+        # sms_code_client = json_dict.get('sms_code')
+        # access_token = json_dict.get('access_token')
+        mobile = request.POST.get('mobile')
+        password = request.POST.get('password')
+        sms_code_client = request.POST.get('sms_code')
+        access_token = request.POST.get('access_token')
 
         # 校验参数
-        if not all([mobile,password,sms_code_client,access_token]):
+        if not all([mobile, password, sms_code_client, access_token]):
             return http.HttpResponseForbidden('缺少参数')
-        if not re.match(r'^1[3-9]\d{9}$',mobile):
+        if not re.match(r'^1[3-9]\d{9}$', mobile):
             return http.HttpResponseForbidden('手机格式不正确')
-        if not re.match(r'^a-zA-Z0-9{8,20}$',password):
+        if not re.match(r'^[a-zA-Z0-9]{8,20}$', password):
             return http.HttpResponseForbidden('密码格式不正确')
         # 链接redis查询验证码
         redis_conn = get_redis_connection('verify_code')
         try:
-            sms_code_server = redis_conn.get('sms_%s' % mobile)
+            sms_code_server = redis_conn.get('sms_%s' % mobile).decode()
         except Exception as e:
             logger.error(e)
             return http.HttpResponseForbidden('验证码已经失效')
         else:
             if sms_code_client != sms_code_server:
-                return http.HttpResponseForbidden('验证码错误')
+                return http.HttpResponseForbidden('短信验证码错误')
         # 校验access_token
         openid = check_access_token(access_token)
         # 如果openid没有值,则验证失败
@@ -104,14 +110,14 @@ class QQUserView(View):
             logger.error(e)
             return http.HttpResponseForbidden('OAuth2.0验证失败')
         try:
-            user = OAuthQQUser.objects.create(openid=openid,user='users.User')
+            user_qq = OAuthQQUser.objects.create(openid=openid, user='users.User')
         except Exception as e:
             logger.error(e)
             return http.HttpResponseForbidden('OAuth2.0验证失败')
         # 保持状态 修改cookie
-        login(request,user)
+        login(request, user_qq.user)
         response = redirect(reverse('contents:index'))
-        response.set_cookie('username',user.username,3600*24*15)
+        response.set_cookie('username', user.username, 3600 * 24 * 15)
 
         # 返回首页
         return response
