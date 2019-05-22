@@ -1,17 +1,52 @@
+import json
 import re
 from django import http
 from django.contrib.auth import login, authenticate, logout
+from django.core.mail import send_mail
 from django.db import DatabaseError
 from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views import View
 from django_redis import get_redis_connection
 from meiduo_mall.utils.response_code import RETCODE
-from meiduo_mall.utils.views import LoginRequiredMixin
+from meiduo_mall.utils.views import LoginRequiredMixin, LoginRequiredJSONMixin
 from users.models import User
+from celery_tasks.email.tasks import send_verify_email
 
 
 # Create your views here.
+class EmailView(LoginRequiredJSONMixin, View):
+    """添加邮箱"""
+
+    def put(self, request):
+        """
+        接收邮箱
+        :param request:
+        :return:
+        """
+        # 获取参数
+        json_dict = json.loads(request.body.decode())
+        if not json_dict:
+            return http.JsonResponse({'code': RETCODE.EMAILERR, 'errmsg': '缺少邮箱参数'})
+        email = json_dict.get('email')
+        # 校验参数
+        if not re.match(r'^[a-z0-9][\w\.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$', email):
+            return http.JsonResponse({'code': RETCODE.EMAILERR, 'errmsg': '邮箱格式错误'})
+        # 修改邮箱,重新定义用户验证LoginRequiredJSONMixin类
+        try:
+            request.user.email = email
+            request.user.save()
+        except DatabaseError:
+            return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': '邮箱保存失败'})
+        # 发送邮件 celery新建任务tasks
+        # 导入
+
+        # 异步发送验证邮箱
+        verify_url = request.user.general_verify_url()
+        # send_verify_email.delay(email, verify_url)
+        send_verify_email(email,verify_url)
+        # 响应添加邮箱结果
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '邮箱添加成功'})
 
 
 class UserInfoView(LoginRequiredMixin, View):
@@ -29,7 +64,14 @@ class UserInfoView(LoginRequiredMixin, View):
         # 1.在utils文件夹中创建views.py定义mixin扩展类专门用来验证用户的登录
         # 2.继承mixin扩展类,即可拥有判断的权限
         # 3.在login页面进行判断,如果有查询字符串则跳转到相应的页面
-        return render(request, 'user_center_info.html')
+        context = {
+            'username': request.user.username,
+            'mobile': request.user.mobile,
+            'email': request.user.email,
+            'email_active': request.user.email_active
+        }
+
+        return render(request, 'user_center_info.html', context=context)
 
 
 class LogoutView(View):

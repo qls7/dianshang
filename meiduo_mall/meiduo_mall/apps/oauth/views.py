@@ -60,7 +60,9 @@ class QQUserView(View):
         else:
             # 存在,保持状态,设置cookie,返回首页
             login(request, user_qq.user)
-            response = redirect(reverse('contents:index'))
+            # 获取请求 地址
+            next = request.GET.get('state','/')
+            response = redirect(next)
             response.set_cookie('username', user_qq.user.username, max_age=3600 * 24 * 15)
             return response
 
@@ -117,7 +119,10 @@ class QQUserView(View):
             return http.HttpResponseForbidden('OAuth2.0验证失败:保存openid失败')
         # 保持状态 修改cookie
         login(request, user_qq.user)
-        response = redirect(reverse('contents:index'))
+        # 获取next的参数,进行重定向
+        next = request.GET.get('state','/')  # 如果没有获取到,就给get设置默认值'/'
+
+        response = redirect(next)
         response.set_cookie('username', user.username, 3600 * 24 * 15)
 
         # 返回首页

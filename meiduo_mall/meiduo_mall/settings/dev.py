@@ -238,3 +238,24 @@ LOGIN_URL = '/login/'
 QQ_CLIENT_ID = '101518219'
 QQ_CLIENT_SECRET = '418d84ebdc7241efb79536886ae95224'
 QQ_REDIRECT_URI = 'http://www.meiduo.site:8000/oauth_callback'
+
+# ########配置邮件服务器###############################################
+
+# 发送短信的相关设置,这些设置是当用户没有发送相关字段时,默认使用的内容:
+# 发送短信必须进行的设置:
+EMAIL_BANKEND = 'django.core.email.backends.smtp.EmailBackend'
+# 我们使用的 smtp 服务器地址
+EMAIL_HOST = 'smtp.163.com'
+# 端口号
+EMAIL_PORT = 25
+# 下面的类容是可变的,随后台设置的不同而改变:
+# 发送邮件的邮箱
+EMAIL_HOST_USR = 'meiduo_mall7@163.com'
+# 在邮箱中设置的客户端授权密码
+EMAIL_HOST_PASSEORD = 'huihai55888'
+# 收件人看到的发件人
+EMAIL_FROM = '美多商城<meiduo_mall7@163.com>'
+# 邮箱验证链接
+EMAIL_VERIFY_URL = 'http://www.meiduo.site:8000/emails/verification/'
+# 默认邮箱发件人
+DEFAULT_FROM_EMAIL = '美多商城<meiduo_mall7@163.com>'

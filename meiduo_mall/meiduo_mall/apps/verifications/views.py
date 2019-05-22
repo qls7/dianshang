@@ -74,7 +74,7 @@ class SMSCodeView(View):
 
         # 异步方案 RabbitMQ和Celery
         from celery_tasks.sms.tasks import ccp_send_sms_code
-        ccp_send_sms_code.delay(mobile,sms_code)
+        # ccp_send_sms_code.delay(mobile,sms_code)
         # 10.响应结果
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '发送短信成功'})
 
