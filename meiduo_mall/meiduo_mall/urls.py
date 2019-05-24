@@ -25,6 +25,7 @@ urlpatterns = [
     # verifications
     url(r'^', include('verifications.urls',namespace='verifications')),
     # oauth
-    url(r'^',include('oauth.urls',namespace='oauth'))
-
+    url(r'^',include('oauth.urls',namespace='oauth')),
+    # address
+    url(r'^',include('areas.urls',namespace='areas'))
 ]

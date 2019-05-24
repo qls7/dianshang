@@ -2,9 +2,11 @@ import itsdangerous
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-
-
+import logging
+logger = logging.getLogger('django')
 # Create your models here.
+from itsdangerous import BadData
+
 
 class User(AbstractUser):
     """自定义用户模型类"""
@@ -38,7 +40,8 @@ class User(AbstractUser):
         verify_url = settings.EMAIL_VERIFY_URL + '?token=' + token
         return verify_url
 
-    def check_verify_url(self, token):
+    @staticmethod
+    def check_verify_url(token):
         """
         验证邮箱链接
         :return:
@@ -46,5 +49,14 @@ class User(AbstractUser):
         serializer = itsdangerous.TimedJSONWebSignatureSerializer(secret_key=settings.SECRET_KEY, expires_in=3600 * 24)
         try:
             data = serializer.loads(token)
-        except Exception:
-            pass
+        except BadData:
+            return None
+        else:
+            id = data.get('id')
+            email = data.get('email')
+        try:
+            user = User.objects.get(id=id, email=email)
+        except User.DoesNotExist:
+            return None
+        else:
+            return user

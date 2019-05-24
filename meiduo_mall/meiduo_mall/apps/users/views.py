@@ -2,7 +2,6 @@ import json
 import re
 from django import http
 from django.contrib.auth import login, authenticate, logout
-from django.core.mail import send_mail
 from django.db import DatabaseError
 from django.shortcuts import render, redirect
 from django.urls import reverse
@@ -12,9 +11,49 @@ from meiduo_mall.utils.response_code import RETCODE
 from meiduo_mall.utils.views import LoginRequiredMixin, LoginRequiredJSONMixin
 from users.models import User
 from celery_tasks.email.tasks import send_verify_email
+import logging
+logger = logging.getLogger('django')
 
 
 # Create your views here.
+class AddressView(View):
+    """用户收货地址"""
+    def get(self,request):
+        """
+        提供收货地址界面
+        :param request:
+        :return:
+        """
+        return render(request,'user_center_site.html')
+
+
+class VerifyEmailView(View):
+    """验证邮箱"""
+    def get(self,request):
+        """
+        验证邮箱
+        :param request:
+        :return:
+        """
+        # 获取token的值
+        token = request.GET.get('token')
+        # 校验参数
+        if not token:
+            return http.JsonResponse({'code':RETCODE.PARAMERR,'errmsg':'缺少token值'})
+        user = User.check_verify_url(token)
+        if not user:
+            return http.JsonResponse({'code':RETCODE.ALLOWERR,'errmsg':'邮箱验证失败'})
+        # 进行修改数据中的email_active
+        try:
+            user.email_active = True
+            user.save()
+        except Exception as e:
+            logger.error(e)
+            return http.HttpResponseServerError('邮箱激活失败')
+        # 进行返回
+        return redirect(reverse('users:info'))
+
+
 class EmailView(LoginRequiredJSONMixin, View):
     """添加邮箱"""
 
@@ -43,8 +82,7 @@ class EmailView(LoginRequiredJSONMixin, View):
 
         # 异步发送验证邮箱
         verify_url = request.user.general_verify_url()
-        # send_verify_email.delay(email, verify_url)
-        send_verify_email(email,verify_url)
+        send_verify_email.delay(email, verify_url)
         # 响应添加邮箱结果
         return http.JsonResponse({'code': RETCODE.OK, 'errmsg': '邮箱添加成功'})
 

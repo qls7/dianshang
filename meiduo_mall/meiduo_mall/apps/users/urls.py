@@ -15,6 +15,9 @@ urlpatterns = [
     # 用户中心
     url(r'^info/$', views.UserInfoView.as_view(), name='info'),
     # 添加邮箱
-    url(r'^emails/$', views.EmailView.as_view(),name='addmail'),
-
+    url(r'^emails/$', views.EmailView.as_view(), name='add_email'),
+    # 验证邮箱
+    url(r'^emails/verification/$', views.VerifyEmailView.as_view(), name='verify_email'),
+    # 地址页面展示路由:
+    url(r'^addresses/$', views.AddressView.as_view(), name='address'),
 ]
