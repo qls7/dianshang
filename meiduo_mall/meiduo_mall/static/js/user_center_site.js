@@ -24,6 +24,8 @@ var vm = new Vue({
         error_mobile: false,
         error_tel: false,
         error_email: false,
+        // addresses: JSON.parse(JSON.stringify(addresses)),
+        // default_address_id: default_address_id,
         addresses: [],
         editing_address_index: '',
         default_address_id: '',
@@ -41,45 +43,45 @@ var vm = new Vue({
     },
     watch: {
         // 监听到省份id变化
-        'form_address.province_id': function(){
+        'form_address.province_id': function () {
             if (this.form_address.province_id) {
                 var url = this.host + '/areas/' + this.form_address.province_id + '/';
                 axios.get(url, {
                     responseType: 'json'
                 })
-                .then(response => {
-                    if (response.data.code == '0') {
-                        this.cities = response.data.sub_data.subs;
-                    } else {
-                        console.log(response.data);
+                    .then(response => {
+                        if (response.data.code == '0') {
+                            this.cities = response.data.sub_data.subs;
+                        } else {
+                            console.log(response.data);
+                            this.cities = [];
+                        }
+                    })
+                    .catch(error => {
+                        console.log(error.response);
                         this.cities = [];
-                    }
-                })
-                .catch(error => {
-                    console.log(error.response);
-                    this.cities = [];
-                });
+                    });
             }
         },
         // 监听到城市id变化
-        'form_address.city_id': function(){
-            if (this.form_address.city_id){
-                var url = this.host + '/areas/'+ this.form_address.city_id + '/';
+        'form_address.city_id': function () {
+            if (this.form_address.city_id) {
+                var url = this.host + '/areas/' + this.form_address.city_id + '/';
                 axios.get(url, {
                     responseType: 'json'
                 })
-                .then(response => {
-                    if (response.data.code == '0') {
-                        this.districts = response.data.sub_data.subs;
-                    } else {
-                        console.log(response.data);
+                    .then(response => {
+                        if (response.data.code == '0') {
+                            this.districts = response.data.sub_data.subs;
+                        } else {
+                            console.log(response.data);
+                            this.districts = [];
+                        }
+                    })
+                    .catch(error => {
+                        console.log(error.response);
                         this.districts = [];
-                    }
-                })
-                .catch(error => {
-                    console.log(error.response);
-                    this.districts = [];
-                });
+                    });
             }
         }
     },
@@ -88,8 +90,8 @@ var vm = new Vue({
         get_provinces(){
             var url = this.host + '/areas/';
             axios.get(url, {
-                    responseType: 'json'
-                })
+                responseType: 'json'
+            })
                 .then(response => {
                     if (response.data.code == '0') {
                         this.provinces = response.data.province_list;
@@ -119,7 +121,7 @@ var vm = new Vue({
         },
         check_mobile(){
             var re = /^1[345789]\d{9}$/;
-            if(re.test(this.form_address.mobile)) {
+            if (re.test(this.form_address.mobile)) {
                 this.error_mobile = false;
             } else {
                 this.error_mobile = true;
@@ -140,7 +142,7 @@ var vm = new Vue({
         check_email(){
             if (this.form_address.email) {
                 var re = /^[a-z0-9][\w\.\-]*@[a-z0-9\-]+(\.[a-z]{2,5}){1,2}$/;
-                if(re.test(this.form_address.email)) {
+                if (re.test(this.form_address.email)) {
                     this.error_email = false;
                 } else {
                     this.error_email = true;
@@ -182,7 +184,7 @@ var vm = new Vue({
         },
         // 新增地址
         save_address(){
-            if (this.error_receiver || this.error_place || this.error_mobile || this.error_email || !this.form_address.province_id || !this.form_address.city_id || !this.form_address.district_id ) {
+            if (this.error_receiver || this.error_place || this.error_mobile || this.error_email || !this.form_address.province_id || !this.form_address.city_id || !this.form_address.district_id) {
                 alert('信息填写有误！');
             } else {
                 // 收货人默认就是收货地址标题
@@ -193,56 +195,56 @@ var vm = new Vue({
                     var url = this.host + '/addresses/create/';
                     axios.post(url, this.form_address, {
                         headers: {
-                            'X-CSRFToken':getCookie('csrftoken')
+                            'X-CSRFToken': getCookie('csrftoken')
                         },
                         responseType: 'json'
                     })
-                    .then(response => {
-                        if (response.data.code == '0') {
-                            location.reload();
-                        } else if (response.data.code == '4101') {
-                            location.href = '/login/?next=/addresses/';
-                        }else if (response.data.code == '4007') {
-                            this.error_mobile = true;
-                        } else if (response.data.code == '5002') {
-                            this.error_tel = true;
-                        } else if (response.data.code == '5001') {
-                            this.error_email = true;
-                        } else { // 4002 4003 5000 (以提示框的形式出现)
-                            alert(response.data.errmsg);
-                        }
-                    })
-                    .catch(error => {
-                        console.log(error.response);
-                    });
+                        .then(response => {
+                            if (response.data.code == '0') {
+                                location.reload();
+                            } else if (response.data.code == '4101') {
+                                location.href = '/login/?next=/addresses/';
+                            } else if (response.data.code == '4007') {
+                                this.error_mobile = true;
+                            } else if (response.data.code == '5002') {
+                                this.error_tel = true;
+                            } else if (response.data.code == '5001') {
+                                this.error_email = true;
+                            } else { // 4002 4003 5000 (以提示框的形式出现)
+                                alert(response.data.errmsg);
+                            }
+                        })
+                        .catch(error => {
+                            console.log(error.response);
+                        });
                 } else {
                     // 修改地址
                     var url = this.host + '/addresses/' + this.addresses[this.editing_address_index].id + '/';
                     axios.put(url, this.form_address, {
                         headers: {
-                            'X-CSRFToken':getCookie('csrftoken')
+                            'X-CSRFToken': getCookie('csrftoken')
                         },
                         responseType: 'json'
                     })
-                    .then(response => {
-                        if (response.data.code == '0') {
-                            this.addresses[this.editing_address_index] = response.data.address;
-                            this.is_show_edit = false;
-                        } else if (response.data.code == '4101') {
-                            location.href = '/login/?next=/addresses/';
-                        }else if (response.data.code == '4007') {
-                            this.error_mobile = true;
-                        } else if (response.data.code == '5002') {
-                            this.error_tel = true;
-                        } else if (response.data.code == '5001') {
-                            this.error_email = true;
-                        } else { // 4003 5000 (以弹框的形式出现)
-                            alert(response.data.errmsg);
-                        }
-                    })
-                    .catch(error => {
-                        alert(error.response);
-                    })
+                        .then(response => {
+                            if (response.data.code == '0') {
+                                this.addresses[this.editing_address_index] = response.data.address;
+                                this.is_show_edit = false;
+                            } else if (response.data.code == '4101') {
+                                location.href = '/login/?next=/addresses/';
+                            } else if (response.data.code == '4007') {
+                                this.error_mobile = true;
+                            } else if (response.data.code == '5002') {
+                                this.error_tel = true;
+                            } else if (response.data.code == '5001') {
+                                this.error_email = true;
+                            } else { // 4003 5000 (以弹框的形式出现)
+                                alert(response.data.errmsg);
+                            }
+                        })
+                        .catch(error => {
+                            alert(error.response);
+                        })
                 }
             }
         },
@@ -251,46 +253,46 @@ var vm = new Vue({
             var url = this.host + '/addresses/' + this.addresses[index].id + '/';
             axios.delete(url, {
                 headers: {
-                    'X-CSRFToken':getCookie('csrftoken')
+                    'X-CSRFToken': getCookie('csrftoken')
                 },
                 responseType: 'json'
             })
-            .then(response => {
-                if (response.data.code == '0') {
-                    // 删除对应的标签
-                    this.addresses.splice(index, 1);
-                } else if (response.data.code == '4101') {
-                    location.href = '/login/?next=/addresses/';
-                }else {
-                    alert(response.data.errmsg);
-                }
-            })
-            .catch(error => {
-                console.log(error.response);
-            })
+                .then(response => {
+                    if (response.data.code == '0') {
+                        // 删除对应的标签
+                        this.addresses.splice(index, 1);
+                    } else if (response.data.code == '4101') {
+                        location.href = '/login/?next=/addresses/';
+                    } else {
+                        alert(response.data.errmsg);
+                    }
+                })
+                .catch(error => {
+                    console.log(error.response);
+                })
         },
         // 设置默认地址
         set_default(index){
             var url = this.host + '/addresses/' + this.addresses[index].id + '/default/';
             axios.put(url, {}, {
                 headers: {
-                    'X-CSRFToken':getCookie('csrftoken')
+                    'X-CSRFToken': getCookie('csrftoken')
                 },
                 responseType: 'json'
             })
-            .then(response => {
-                if (response.data.code == '0') {
-                    // 设置默认地址标签
-                    this.default_address_id = this.addresses[index].id;
-                } else if (response.data.code == '4101') {
-                    location.href = '/login/?next=/addresses/';
-                } else {
-                    alert(response.data.errmsg);
-                }
-            })
-            .catch(error => {
-                console.log(error.response);
-            })
+                .then(response => {
+                    if (response.data.code == '0') {
+                        // 设置默认地址标签
+                        this.default_address_id = this.addresses[index].id;
+                    } else if (response.data.code == '4101') {
+                        location.href = '/login/?next=/addresses/';
+                    } else {
+                        alert(response.data.errmsg);
+                    }
+                })
+                .catch(error => {
+                    console.log(error.response);
+                })
         },
         // 设置地址title
         show_edit_title(index){
@@ -308,13 +310,13 @@ var vm = new Vue({
             } else {
                 var url = this.host + '/addresses/' + this.addresses[index].id + '/title/';
                 axios.put(url, {
-                        title: this.input_title
-                    }, {
-                        headers: {
-                            'X-CSRFToken':getCookie('csrftoken')
-                        },
-                        responseType: 'json'
-                    })
+                    title: this.input_title
+                }, {
+                    headers: {
+                        'X-CSRFToken': getCookie('csrftoken')
+                    },
+                    responseType: 'json'
+                })
                     .then(response => {
                         if (response.data.code == '0') {
                             // 更新地址title
@@ -333,9 +335,6 @@ var vm = new Vue({
         },
     }
 });
-
-
-
 
 
 // var now_site = null;

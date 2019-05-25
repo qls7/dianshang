@@ -19,6 +19,7 @@ class Address(BaseModel):
     district = models.ForeignKey('areas.Area', on_delete=models.PROTECT, related_name='districts', verbose_name='区')
     title = models.CharField(max_length=20, verbose_name='标题')
     receiver = models.CharField(max_length=20, verbose_name='收货人')
+    mobile = models.CharField(max_length=11,verbose_name='电话')
     place = models.CharField(max_length=50, verbose_name='收货地址')
     tel = models.CharField(max_length=20, verbose_name='固定电话', null=True, blank=True, default='')
     email = models.CharField(max_length=30, verbose_name='邮箱', null=True, blank=True, default='')
