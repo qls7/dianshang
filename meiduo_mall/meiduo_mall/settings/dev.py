@@ -264,3 +264,16 @@ EMAIL_FROM = '美多商城<meiduo_mall7@163.com>'
 EMAIL_VERIFY_URL = 'http://www.meiduo.site:8000/emails/verification/'
 # 默认邮箱发件人
 # DEFAULT_FROM_EMAIL = '美多商城<meiduo_mall7@163.com>'
+
+# ########配置fastDFS_client###############################################
+
+# FDFS客户端的配置文件
+FDFS_CLIENT_CONF = os.path.join(BASE_DIR,'utils/fastdfs/client.conf')
+# 访问FDFS中存储的文件时,地址有可能变化,所以我们把地址放在这里记录:
+FDFS_URL = 'http://192.168.23.254:8888/'
+# 指定django系统使用的文件存储类:
+DEFAULT_FILE_STORAGE = 'meiduo_mall.utils.fastdfs.fastdfs_storage.FastDFSStorage'
+# 添加访问图片的域名
+# 在 /etc/hosts 中添加访问 Storage 的域名
+# Storage 的 IP 域名
+# 172.16.238.128    image.meiduo.site

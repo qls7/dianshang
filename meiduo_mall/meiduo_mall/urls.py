@@ -31,6 +31,8 @@ urlpatterns = [
     url(r'^',include('oauth.urls',namespace='oauth')),
     # address
     url(r'^',include('areas.urls',namespace='areas')),
-    # tests
-    url(r'^test$',tests.test.as_view())
+    # # tests
+    # url(r'^test$',tests.test.as_view()),
+    # goods
+    url(r'^', include('goods.urls', namespace='goods')),
 ]
