@@ -16,6 +16,9 @@ Including another URLconf
 from django.conf.urls import url, include
 from django.contrib import admin
 
+import users
+from users import tests
+
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
     # users
@@ -27,5 +30,7 @@ urlpatterns = [
     # oauth
     url(r'^',include('oauth.urls',namespace='oauth')),
     # address
-    url(r'^',include('areas.urls',namespace='areas'))
+    url(r'^',include('areas.urls',namespace='areas')),
+    # tests
+    url(r'^test$',tests.test.as_view())
 ]
