@@ -77,28 +77,28 @@
             <div class="sub_menu_con fl">
                 <h1 class="fl">商品分类</h1>
                 <ul class="sub_menu">
-            {% for group in categories.values() %}
-                <li>
-                    <div class="level1">
-                        {% for channel in group.channels %}
-                            <a href="{{ channel.url }}">{{ channel.name }}</a>
-                        {% endfor %}
-                    </div>
-                    <div class="level2">
-                        {% for cat2 in group.sub_cats %}
-                            <div class="list_group">
-                                <div class="group_name fl">{{ cat2.name }} &gt;</div>
-                                <div class="group_detail fl">
-                                    {% for cat3 in cat2.sub_cats %}
-                                        <a href="/list/{{ cat3.id }}/1/">{{ cat3.name }}</a>
-                                    {% endfor %}
-                                </div>
+                    {% for group in categories.values() %}
+                        <li>
+                            <div class="level1">
+                                {% for channel in group.channels %}
+                                    <a href="{{ channel.url }}">{{ channel.name }}</a>
+                                {% endfor %}
                             </div>
-                        {% endfor %}
-                    </div>
-                </li>
-            {% endfor %}
-        </ul>
+                            <div class="level2">
+                                {% for cat2 in group.sub_cats %}
+                                    <div class="list_group">
+                                        <div class="group_name fl">{{ cat2.name }} &gt;</div>
+                                        <div class="group_detail fl">
+                                            {% for cat3 in cat2.sub_cats %}
+                                                <a href="/list/{{ cat3.id }}/1/">{{ cat3.name }}</a>
+                                            {% endfor %}
+                                        </div>
+                                    </div>
+                                {% endfor %}
+                            </div>
+                        </li>
+                    {% endfor %}
+                </ul>
             </div>
 
 
@@ -125,18 +125,13 @@
         <div class="l_wrap fl clearfix">
 
             <!--商品热销排行界面-->
-            <div class="new_goods">
+            <div class="new_goods" v-cloak>
                 <h3>热销排行</h3>
                 <ul>
-                    <li>
-                        <a href="../static/detail.html"><img src="{{ static('images/goods/goods001.jpg') }}"></a>
-                        <h4><a href="#">360手机 N6 Pro 全网通 6GB+128GB 极夜黑</a></h4>
-                        <div class="price">￥3.90</div>
-                    </li>
-                    <li>
-                        <a href="../static/detail.html"><img src="{{ static('images/goods/goods002.jpg') }}"></a>
-                        <h4><a href="#">360手机 N6 Pro 全网通 6GB+128GB 极夜黑</a></h4>
-                        <div class="price">￥16.80</div>
+                    <li v-for="sku in hot_skus">
+                        <a :href="sku.url"><img :src="sku.default_image_url"></a>
+                        <h4><a :href="sku.url">[[ sku.name ]]</a></h4>
+                        <div class="price">￥[[ sku.price ]]</div>
                     </li>
                 </ul>
             </div>
@@ -202,6 +197,9 @@
     </div>
 </div>
 <!-- 导入 js 文件: -->
+<script type="text/javascript">
+    let category_id = "{{ category.id }}";
+</script>
 <script type="text/javascript" src="{{ static('js/common.js') }}"></script>
 <script type="text/javascript" src="{{ static('js/list.js') }}"></script>
 <script type="text/javascript" src="{{ static('js/jquery.pagination.min.js') }}"></script>

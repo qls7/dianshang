@@ -5,8 +5,37 @@ from django.shortcuts import render
 # Create your views here.
 from django.views import View
 
-from goods.models import GoodsCategory
+from goods.models import GoodsCategory, SKU
 from goods.utils import get_categories, get_breadcrumb
+from meiduo_mall.utils.response_code import RETCODE
+
+
+class HotGoodsView(View):
+    """热销排行数据"""
+
+    def get(self, request, category_id):
+        """
+        获取热销排行数据
+        :param request:
+        :param category_id:
+        :return:
+        """
+        # 获取数据按销量进行排序并截取
+        try:
+            skus = SKU.objects.filter(category_id=category_id, is_launched=True).order_by('-sales')[:2]
+        except SKU.DoesNotExist:
+            return http.HttpResponseForbidden('category_id 不存在')
+        # 遍历组装格式
+        hot_skus = list()
+        for sku in skus:
+            hot_skus.append({
+                'id': sku.id,
+                'default_image_url': sku.default_image_url,
+                'name': sku.name,
+                'price': sku.price
+            })
+        # 返回
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'hot_skus': hot_skus})
 
 
 class ListView(View):
@@ -19,7 +48,7 @@ class ListView(View):
         :return:
         """
         # 获取参数
-        sort = request.GET.get('sort','default')
+        sort = request.GET.get('sort', 'default')
         # 校验参数
         # 路由里面已经进行过正则匹配了
         # if not all([category_id, page_num]):
