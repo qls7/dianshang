@@ -1,7 +1,6 @@
 from collections import OrderedDict
-
+from django.core.cache import cache
 from django.shortcuts import render
-
 from goods.models import GoodsChannel, GoodsCategory, SKU
 
 
@@ -124,14 +123,18 @@ def get_goods_and_spec(sku_id, request):
 
     skus = goods.sku_set.filter(is_launched=True)
     # 这里可以增加缓存,把每一类商品的map图存到缓存
-    sku_specs_option_sku_id_map = dict()
-    for s in skus:
-        s_specs = s.skuspecification_set.all().order_by('spec_id')
-        s_key = list()
-        for s_spec in s_specs:
-            s_key.append(s_spec.option.id)
-        sku_specs_option_sku_id_map[tuple(s_key)] = s.id
-
+    map = cache.get('goods' + str(goods.id))
+    if map is None:
+        sku_specs_option_sku_id_map = dict()
+        for s in skus:
+            s_specs = s.skuspecification_set.all().order_by('spec_id')
+            s_key = list()
+            for s_spec in s_specs:
+                s_key.append(s_spec.option.id)
+            sku_specs_option_sku_id_map[tuple(s_key)] = s.id
+        cache.set('goods' + str(goods.id), sku_specs_option_sku_id_map, 3600)
+    else:
+        sku_specs_option_sku_id_map = map
     goods_specs = goods.goodsspecification_set.all().order_by('id')
     if len(sku_key) < len(goods_specs):
         return

@@ -1,13 +1,58 @@
+import datetime
 from django import http
 from django.core.paginator import Paginator, EmptyPage
 from django.shortcuts import render
 
 # Create your views here.
+from django.utils import timezone
 from django.views import View
+import logging
 
-from goods.models import GoodsCategory, SKU
+logger = logging.getLogger('django')
+from goods.models import GoodsCategory, SKU, GoodsVisitCount
 from goods.utils import get_categories, get_breadcrumb, get_goods_and_spec
 from meiduo_mall.utils.response_code import RETCODE
+
+
+class DetailVisitView(View):
+    """统计分类商品访问量"""
+
+    def post(self, request, category_id):
+        """
+        统计商品用户的访问量
+        :param request:
+        :param category_id:
+        :return:
+        """
+        # 先根据category_id获取当前的类别
+        try:
+            category = GoodsCategory.objects.get(id=category_id)
+        except GoodsCategory.DoesNotExist:
+            return http.HttpResponseForbidden('缺少必传参数')
+
+        # 1.获取今天的时间
+        t = timezone.localtime()  # 获取时间对象
+        # 根据时间对象拼接日期的字符串形式
+        today_str = '%d-%02d-%02d' % (t.year, t.month, t.day)
+        # 将字符串转为日期格式
+        today_date = datetime.datetime.strptime(today_str, '%Y-%m-%d')
+        # 2.在数据库中进行查询看当前商品是否有被浏览过
+        try:
+            counts_data = GoodsVisitCount.objects.get(date=today_date, category=category)
+        # 3.如果有就进行加一
+        except GoodsVisitCount.DoesNotExist:
+            counts_data = GoodsVisitCount()
+        try:
+            # 4.如果没有就新建记录并保存
+            counts_data.category = category
+            counts_data.count += 1
+            counts_data.date = today_date
+            counts_data.save()
+        except Exception as e:
+            logger.error(e)
+            return http.HttpResponseForbidden('数据保存失败')
+        # 5.返回
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
 
 
 class DetailView(View):
@@ -20,31 +65,19 @@ class DetailView(View):
         :param sku_id:
         :return:
         """
-        # 获取商品sku
-        # try:
-        #     sku = SKU.objects.get(id=sku_id)
-        # except SKU.DoesNotExist:
-        #     return render(request,'404.html')
         # 获取商品频道分类
         categories = get_categories()
-        # 获取商品面包屑
-        # category = sku.category
-        # breadcrumb = get_breadcrumb(category)
         # 获取商品sku规格
-        data = get_goods_and_spec(sku_id,request)
-        # 获取热销排行
-        # 直接将商品类返回给前端,前端会接收到商品类id主动请求
-        # 获取商品详情售后服务
-
+        data = get_goods_and_spec(sku_id, request)
         # 组合参数
         context = {
-            'categories':categories,
-            'goods':data.get('goods'),
-            'sku':data.get('sku'),
-            'specs':data.get('goods_specs')
+            'categories': categories,
+            'goods': data.get('goods'),
+            'sku': data.get('sku'),
+            'specs': data.get('goods_specs')
         }
-        # 返回
-        return render(request,'detail.html',context=context)
+        # 进行返回
+        return render(request, 'detail.html', context=context)
 
 
 class HotGoodsView(View):

@@ -1,5 +1,8 @@
 import json
 import re
+from time import timezone
+
+import datetime
 from django import http
 from django.contrib.auth import login, authenticate, logout
 from django.db import DatabaseError
@@ -7,6 +10,9 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views import View
 from django_redis import get_redis_connection
+from redis.utils import pipeline
+
+from goods.models import GoodsCategory, GoodsVisitCount, SKU
 from meiduo_mall.utils.response_code import RETCODE
 from meiduo_mall.utils.views import LoginRequiredMixin, LoginRequiredJSONMixin
 from users.models import User, Address
@@ -17,12 +23,72 @@ logger = logging.getLogger('django')
 
 
 # Create your views here.
+class UserBrowseHistory(LoginRequiredJSONMixin, View):
+    """用户浏览sku记录"""
+
+    def get(self, request):
+        """
+        获取浏览记录
+        :param request:
+        :return:
+        """
+        # 获取当前user
+        # 根据user_id去数据库获取sku_id
+        # 根基sku_id拼接数据
+        # 进行返回
+        user_id = request.user.id
+        redis_conn = get_redis_connection('history')
+        sku_ids = redis_conn.lrange('history_' + str(user_id), 0, -1)
+        sku_list = list()
+        for sku in sku_ids:
+            # 根据id获取sku对象
+            sku = SKU.objects.get(id=sku)
+            sku_list.append({
+                'id': sku.id,
+                'name': sku.name,
+                'default_image_url': sku.default_image_url,
+                'price': sku.price,
+            })
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK', 'skus': sku_list})
+
+    def post(self, request):
+        """
+        保存用户浏览记录
+        :param request:
+        :return:
+        """
+        # 1.获取参数
+        # 2.校验参数
+        # 3.链接redis进行存储,先去重,再添加,再截取
+        # 4.返回
+        dic = json.loads(request.body.decode())
+        sku_id = dic.get('sku_id')
+        if not sku_id:
+            return http.HttpResponseForbidden('缺少必传参数')
+        try:
+            SKU.objects.get(id=sku_id, is_launched=True)
+        except SKU.DoesNotExist:
+            return http.HttpResponseForbidden('sku_id不存在')
+        redis_conn = get_redis_connection('history')
+        key = 'history_' + str(request.user.id)
+        try:
+            pl = redis_conn.pipeline()
+            pl.lrem(key, 0, sku_id)
+            pl.lpush(key, sku_id)
+            pl.ltrim(key, 0, 4)
+            pl.execute()
+        except Exception as e:
+            logger.error(e)
+            return http.HttpResponseForbidden('数据保存失败')
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'OK'})
+
 
 class ChangePasswordView(LoginRequiredMixin, View):
     """修改密码"""
-    def get(self,request):
+
+    def get(self, request):
         """获取修改密码的页面"""
-        return render(request,'user_center_pass.html')
+        return render(request, 'user_center_pass.html')
 
     def post(self, request):
         """
@@ -38,11 +104,13 @@ class ChangePasswordView(LoginRequiredMixin, View):
         if not all([old_password, new_password, new_password2]):
             return http.HttpResponseForbidden('缺少必传参数')
         if not request.user.check_password(old_password):
-            return render(request, 'user_center_pass.html', {'code': RETCODE.THROTTLINGERR, 'origin_pwd_errmsg': '原始密码输入错误'})
-        if not re.match(r'^[0-9A-Za-z]{8,20}$',new_password):
+            return render(request, 'user_center_pass.html',
+                          {'code': RETCODE.THROTTLINGERR, 'origin_pwd_errmsg': '原始密码输入错误'})
+        if not re.match(r'^[0-9A-Za-z]{8,20}$', new_password):
             return http.HttpResponseForbidden('密码格式错误')
         if new_password != new_password2:
-            return render(request, 'user_center_pass.html', {'code': RETCODE.THROTTLINGERR, 'change_pwd_errmsg': '两次密码不一致'})
+            return render(request, 'user_center_pass.html',
+                          {'code': RETCODE.THROTTLINGERR, 'change_pwd_errmsg': '两次密码不一致'})
         # 修改密码
         try:
             request.user.set_password(new_password)
