@@ -35,4 +35,6 @@ urlpatterns = [
     # url(r'^test$',tests.test.as_view()),
     # goods
     url(r'^', include('goods.urls', namespace='goods')),
+    # Haystack 注册
+    url(r'^search/',include('haystack.urls')),
 ]

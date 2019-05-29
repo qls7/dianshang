@@ -6,8 +6,45 @@ from django.shortcuts import render
 from django.views import View
 
 from goods.models import GoodsCategory, SKU
-from goods.utils import get_categories, get_breadcrumb
+from goods.utils import get_categories, get_breadcrumb, get_goods_and_spec
 from meiduo_mall.utils.response_code import RETCODE
+
+
+class DetailView(View):
+    """商品详情页"""
+
+    def get(self, request, sku_id):
+        """
+        获取商品详情页
+        :param request:
+        :param sku_id:
+        :return:
+        """
+        # 获取商品sku
+        # try:
+        #     sku = SKU.objects.get(id=sku_id)
+        # except SKU.DoesNotExist:
+        #     return render(request,'404.html')
+        # 获取商品频道分类
+        categories = get_categories()
+        # 获取商品面包屑
+        # category = sku.category
+        # breadcrumb = get_breadcrumb(category)
+        # 获取商品sku规格
+        data = get_goods_and_spec(sku_id,request)
+        # 获取热销排行
+        # 直接将商品类返回给前端,前端会接收到商品类id主动请求
+        # 获取商品详情售后服务
+
+        # 组合参数
+        context = {
+            'categories':categories,
+            'goods':data.get('goods'),
+            'sku':data.get('sku'),
+            'specs':data.get('goods_specs')
+        }
+        # 返回
+        return render(request,'detail.html',context=context)
 
 
 class HotGoodsView(View):

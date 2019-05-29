@@ -44,7 +44,9 @@ INSTALLED_APPS = [
     'oauth',
     'areas',
     'contents',
-    'goods'
+    'goods',
+    # 全文检索
+    'haystack',
 ]
 
 MIDDLEWARE = [
@@ -175,6 +177,7 @@ CACHES = {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
         }
     },
+
 }
 SESSION_ENGINE = "django.contrib.sessions.backends.cache"
 SESSION_CACHE_ALIAS = "session"
@@ -277,3 +280,20 @@ DEFAULT_FILE_STORAGE = 'meiduo_mall.utils.fastdfs.fastdfs_storage.FastDFSStorage
 # 在 /etc/hosts 中添加访问 Storage 的域名
 # Storage 的 IP 域名
 # 172.16.238.128    image.meiduo.site
+
+# ########配置 Haystack ###############################################
+
+# Haystack
+HAYSTACK_CONNECTIONS = {
+    'default': {
+        'ENGINE': 'haystack.backends.elasticsearch_backend.ElasticsearchSearchEngine',
+        'URL': 'http://192.168.23.254:9200/', # Elasticsearch服务器ip地址，端口号固定为9200
+        'INDEX_NAME': 'meiduo_mall', # Elasticsearch建立的索引库的名称
+    },
+}
+
+# 当添加、修改、删除数据时，自动生成索引
+HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
+
+# 可以在 dev.py 中添加如下代码, 用于决定每页显示数据条数:
+HAYSTACK_SEARCH_RESULTS_PER_PAGE = 5
