@@ -14,7 +14,7 @@ from goods.models import SKU
 from meiduo_mall.utils.response_code import RETCODE
 
 
-class CartsSelectAllView(View):
+class CartSelectAllView(View):
     """全选购物车"""
 
     def put(self, request):
@@ -25,22 +25,50 @@ class CartsSelectAllView(View):
         """
         # 1.获取参数
         json_dict = json.loads(request.body.decode())
-        selected = json_dict.get('selected')
+        selected = json_dict.get('selected',True)
         # 2.校验参数
-        if not selected:
-            
+        # 这里不用判断,下面一个判断就可以判断参数是否正确,不用在这里重复判断
+        # if not selected:
+        #     return http.HttpResponseForbidden('缺少必传参数')
+        if not isinstance(selected, bool):
+            return http.HttpResponseForbidden('selected参数错误')
         # 3.判断用户是否登录
-        # 4.如果登录成功
-        # 5.连接redis 获取hash的数据
-        # 6.判断selected的值
-        # 7.如果是True把所有的key值都加入到set中
-        # 8.如果都是False把所有的key都删除
-        # 9.返回
-        # 10.如果登录不成功
-        # 11.获取cookie的值,解密
-        # 12.把selected的值重新赋值给字典中的selected
-        # 13.加密
-        # 14.返回
+        if request.user.is_authenticated:
+            # 4.如果登录成功
+            # 5.连接redis 获取hash的数据
+            redis_conn = get_redis_connection('carts')
+            items_dict = redis_conn.hgetall('carts_%s' % request.user.id)
+            sku_ids = items_dict.keys()
+            pl = redis_conn.pipeline()
+            # 6.判断selected的值
+
+            if selected:
+                # 7.如果是True把所有的key值都加入到set中
+                pl.sadd('selected_%s' % request.user.id, *sku_ids)
+            else:
+                # 8.如果是False把所有的key都删除
+                pl.srem('selected_%s' % request.user.id, *sku_ids)
+
+            pl.execute()
+            # 9.返回
+            return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'ok'})
+
+        else:
+            # 10.如果登录不成功
+            # 11.获取cookie的值,解密
+            cookie_carts = request.COOKIES.get('carts')
+            response = http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'ok'})
+            if cookie_carts:
+                cart_dict = pickle.loads(base64.b64decode(cookie_carts))
+                # 12.把selected的值重新赋值给字典中的selected
+                for key in cart_dict.keys():
+                    cart_dict[key]['selected'] = selected
+                # 13.加密
+                carts = base64.b64encode(pickle.dumps(cart_dict)).decode()
+                response.set_cookie('carts', carts)
+            # 14.返回
+            return response
+
 
 class CartsView(View):
     """购物车管理"""
