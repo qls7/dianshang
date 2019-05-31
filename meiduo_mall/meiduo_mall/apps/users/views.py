@@ -1,8 +1,6 @@
 import json
 import re
-from time import timezone
 
-import datetime
 from django import http
 from django.contrib.auth import login, authenticate, logout
 from django.db import DatabaseError
@@ -10,8 +8,8 @@ from django.shortcuts import render, redirect
 from django.urls import reverse
 from django.views import View
 from django_redis import get_redis_connection
-from redis.utils import pipeline
 
+from carts.utils import merge_cart_cookie_to_redis
 from goods.models import GoodsCategory, GoodsVisitCount, SKU
 from meiduo_mall.utils.response_code import RETCODE
 from meiduo_mall.utils.views import LoginRequiredMixin, LoginRequiredJSONMixin
@@ -547,6 +545,8 @@ class LoginView(View):
 
         # 5.响应登录结果
         # return redirect(reverse('contents:index'))
+        # 6.增加合并cookie.cart操作(登录成功合并购物车)
+        response = merge_cart_cookie_to_redis(request, response, user)
         return response
 
 

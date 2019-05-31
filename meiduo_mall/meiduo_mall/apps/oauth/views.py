@@ -11,6 +11,7 @@ from django.urls import reverse
 from django.views import View
 from django_redis import get_redis_connection
 
+from carts.utils import merge_cart_cookie_to_redis
 from meiduo_mall.utils.response_code import RETCODE
 from oauth.models import OAuthQQUser
 from oauth.utils import general_access_token, check_access_token
@@ -64,6 +65,9 @@ class QQUserView(View):
             next = request.GET.get('state','/')
             response = redirect(next)
             response.set_cookie('username', user_qq.user.username, max_age=3600 * 24 * 15)
+            # 登录成功 合并cookie中的购物车
+            response = merge_cart_cookie_to_redis(request, response, user_qq.user)
+
             return response
 
     def post(self, request):
@@ -124,6 +128,10 @@ class QQUserView(View):
 
         response = redirect(next)
         response.set_cookie('username', user.username, 3600 * 24 * 15)
+
+        # 登录成功 合并cookie中的购物车
+        response = merge_cart_cookie_to_redis(request, response, user_qq.user)
+
 
         # 返回首页
         return response
