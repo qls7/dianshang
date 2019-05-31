@@ -30,7 +30,7 @@
                     <span>|</span>
                     <a href="{{ url('users:info') }}">用户中心</a>
                     <span>|</span>
-                    <a href="../static/cart.html">我的购物车</a>
+                    <a href="{{ url('carts:info') }}">我的购物车</a>
                     <span>|</span>
                     <a href="../static/user_center_order.html">我的订单</a>
                 </div>
@@ -94,18 +94,18 @@
 
             <h3 class="common_title2">最近浏览</h3>
             <div class="has_view_list" v-cloak>
-    <ul class="goods_type_list clearfix">
-        <li v-for="sku in histories">
-            <a :href="sku.url"><img :src="sku.default_image_url"></a>
-            <h4><a :href="sku.url">[[ sku.name ]]</a></h4>
-            <div class="operate">
-                <span class="price">￥[[ sku.price ]]</span>
-                <span class="unit">台</span>
-                <a href="javascript:;" class="add_goods" title="加入购物车"></a>
+                <ul class="goods_type_list clearfix">
+                    <li v-for="sku in histories">
+                        <a :href="sku.url"><img :src="sku.default_image_url"></a>
+                        <h4><a :href="sku.url">[[ sku.name ]]</a></h4>
+                        <div class="operate">
+                            <span class="price">￥[[ sku.price ]]</span>
+                            <span class="unit">台</span>
+                            <a href="javascript:;" class="add_goods" title="加入购物车"></a>
+                        </div>
+                    </li>
+                </ul>
             </div>
-        </li>
-    </ul>
-</div>
         </div>
     </div>
 

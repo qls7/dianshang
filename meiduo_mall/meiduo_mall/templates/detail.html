@@ -4,7 +4,7 @@
 <head>
     <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
     <title>美多商城-商品详情</title>
-        <link rel="stylesheet" type="text/css" href="{{ static('css/reset.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ static('css/reset.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ static('css/main.css') }}">
     <script type="text/javascript" src="{{ static('js/host.js') }}"></script>
     <script type="text/javascript" src="{{ static('js/vue-2.5.16.js') }}"></script>
@@ -26,9 +26,9 @@
                 </div>
                 <div class="user_link fl">
                     <span>|</span>
-                    <a href="user_center_info.html">用户中心</a>
+                    <a href="{{ url('users:info') }}">用户中心</a>
                     <span>|</span>
-                    <a href="../static/cart.html">我的购物车</a>
+                    <a href="{{ url('carts:info') }}">我的购物车</a>
                     <span>|</span>
                     <a href="../static/user_center_order.html">我的订单</a>
                 </div>
@@ -52,7 +52,7 @@
         </div>
 
         <div class="guest_cart fr">
-            <a href="../static/cart.html" class="cart_name fl">我的购物车</a>
+            <a href="cart.html" class="cart_name fl">我的购物车</a>
             <div class="goods_count fl" id="show_count">2</div>
             <ul class="cart_goods_show">
                 <li>
@@ -304,7 +304,7 @@
             {% endfor %}
             <div class="total" v-cloak>总价：<em>[[ sku_amount ]]元</em></div>
             <div class="operate_btn">
-                <a href="javascript:;" class="add_cart" id="add_cart">加入购物车</a>
+                <a @click="add_cart" class="add_cart" id="add_cart">加入购物车</a>
             </div>
         </div>
     </div>
@@ -329,44 +329,44 @@
         </div>
 
         <div class="r_wrap fr clearfix">
-    <ul class="detail_tab clearfix">
-        <li @click="on_tab_content('detail')" :class="tab_content.detail?'active':''">商品详情</li>
-        <li @click="on_tab_content('pack')" :class="tab_content.pack?'active':''">规格与包装</li>
-        <li @click="on_tab_content('service')" :class="tab_content.service?'active':''">售后服务</li>
-        <li @click="on_tab_content('comment')" :class="tab_content.comment?'active':''">商品评价(18)</li>
-    </ul>
-    <div @click="on_tab_content('detail')" class="tab_content" :class="tab_content.detail?'current':''">
-        <dl>
-            <dt>商品详情：</dt>
-            <dd>{{ goods.desc_detail|safe }}</dd>
-        </dl>
-    </div>
-    <div @click="on_tab_content('pack')" class="tab_content" :class="tab_content.pack?'current':''">
-        <dl>
-            <dt>规格与包装：</dt>
-            <dd>{{ goods.desc_pack|safe }}</dd>
-        </dl>
-    </div>
-    <div @click="on_tab_content('comment')" class="tab_content" :class="tab_content.comment?'current':''">
-        <ul class="judge_list_con">
-            <li class="judge_list fl" v-for="comment in comments">
-                <div class="user_info fl">
-                    <b>[[comment.username]]</b>
-                </div>
-                <div class="judge_info fl">
-                    <div :class="comment.score_class"></div>
-                    <div class="judge_detail">[[comment.comment]]</div>
-                </div>
-            </li>
-        </ul>
-    </div>
-    <div @click="on_tab_content('service')" class="tab_content" :class="tab_content.service?'current':''">
-        <dl>
-            <dt>售后服务：</dt>
-            <dd>{{ goods.desc_service|safe }}</dd>
-        </dl>
-    </div>
-</div>
+            <ul class="detail_tab clearfix">
+                <li @click="on_tab_content('detail')" :class="tab_content.detail?'active':''">商品详情</li>
+                <li @click="on_tab_content('pack')" :class="tab_content.pack?'active':''">规格与包装</li>
+                <li @click="on_tab_content('service')" :class="tab_content.service?'active':''">售后服务</li>
+                <li @click="on_tab_content('comment')" :class="tab_content.comment?'active':''">商品评价(18)</li>
+            </ul>
+            <div @click="on_tab_content('detail')" class="tab_content" :class="tab_content.detail?'current':''">
+                <dl>
+                    <dt>商品详情：</dt>
+                    <dd>{{ goods.desc_detail|safe }}</dd>
+                </dl>
+            </div>
+            <div @click="on_tab_content('pack')" class="tab_content" :class="tab_content.pack?'current':''">
+                <dl>
+                    <dt>规格与包装：</dt>
+                    <dd>{{ goods.desc_pack|safe }}</dd>
+                </dl>
+            </div>
+            <div @click="on_tab_content('comment')" class="tab_content" :class="tab_content.comment?'current':''">
+                <ul class="judge_list_con">
+                    <li class="judge_list fl" v-for="comment in comments">
+                        <div class="user_info fl">
+                            <b>[[comment.username]]</b>
+                        </div>
+                        <div class="judge_info fl">
+                            <div :class="comment.score_class"></div>
+                            <div class="judge_detail">[[comment.comment]]</div>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+            <div @click="on_tab_content('service')" class="tab_content" :class="tab_content.service?'current':''">
+                <dl>
+                    <dt>售后服务：</dt>
+                    <dd>{{ goods.desc_service|safe }}</dd>
+                </dl>
+            </div>
+        </div>
 
 
     </div>
@@ -385,12 +385,12 @@
         <p>电话：010-****888 京ICP备*******8号</p>
     </div>
 </div>
- <script>
-        var price = "{{ sku.price }}";
-        var category_id = "{{ goods.category3.id }}";
-        var sku_id = "{{ sku.id }}";
-    </script>
-    <script type="text/javascript" src="{{ static('js/common.js') }}"></script>
-    <script type="text/javascript" src="{{ static('js/detail.js') }}"></script>
+<script>
+    var price = "{{ sku.price }}";
+    var category_id = "{{ goods.category3.id }}";
+    var sku_id = "{{ sku.id }}";
+</script>
+<script type="text/javascript" src="{{ static('js/common.js') }}"></script>
+<script type="text/javascript" src="{{ static('js/detail.js') }}"></script>
 </body>
 </html>
