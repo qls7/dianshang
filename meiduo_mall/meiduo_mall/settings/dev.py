@@ -40,14 +40,18 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+
     'users',
     'oauth',
     'areas',
     'contents',
     'goods',
+    'carts',
+    'orders',
+
     # 全文检索
     'haystack',
-    'carts',
+
 ]
 
 MIDDLEWARE = [

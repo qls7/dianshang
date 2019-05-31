@@ -14,6 +14,57 @@ from goods.models import SKU
 from meiduo_mall.utils.response_code import RETCODE
 
 
+class CartsSimpleView(View):
+    """商品页面简单购物车"""
+
+    def get(self, request):
+        """
+        展示简单购物车的数据
+        :param request:
+        :return:
+        """
+        # 1.判断用户是否登录
+        if request.user.is_authenticated:
+            # 2.如果登录
+            # 3.连接redis数据库
+            redis_conn = get_redis_connection('carts')
+            # 4.获取hash表的数据user_id:{sku_id:count,sku_id:count}
+            dict = redis_conn.hgetall('carts_%s' % request.user.id)
+            selected_list = redis_conn.smembers('selected_%s' % request.user.id)
+            # 5.拿到count和sku_id
+            cart_dict = {}
+            # 6.拼接cookie的个格式
+            for sku_id, count in dict.items():
+                cart_dict[int(sku_id)] = {
+                    'count': int(count),
+                    'selected': sku_id in selected_list
+                }
+        else:
+            # 7.如果没登录
+            # 8.从cookie中获取数据
+            cookie_cart = request.COOKIES.get('carts')
+            if cookie_cart:
+                # 9.解密
+                cart_dict = pickle.loads(base64.b64decode(cookie_cart))
+            else:
+                cart_dict = {}
+        # 10.拿到所有的sku_id
+        sku_ids = cart_dict.keys()
+        # 11.获取所有的sku
+        skus = SKU.objects.filter(id__in=sku_ids)
+        cart_sku = []
+        # 12.遍历拼接商品详情
+        for sku in skus:
+            cart_sku.append({
+                'id': sku.id,
+                'name': sku.name,
+                'count': cart_dict[sku.id]['count'],
+                'default_image_url': sku.default_image_url,
+            })
+        # 16.返回
+        return http.JsonResponse({'code':RETCODE.OK,'errmsg':'ok','cart_skus':cart_sku})
+
+
 class CartSelectAllView(View):
     """全选购物车"""
 
@@ -25,7 +76,7 @@ class CartSelectAllView(View):
         """
         # 1.获取参数
         json_dict = json.loads(request.body.decode())
-        selected = json_dict.get('selected',True)
+        selected = json_dict.get('selected', True)
         # 2.校验参数
         # 这里不用判断,下面一个判断就可以判断参数是否正确,不用在这里重复判断
         # if not selected:

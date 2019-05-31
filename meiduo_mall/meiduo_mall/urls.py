@@ -21,22 +21,24 @@ from users import tests
 
 urlpatterns = [
     url(r'^admin/', admin.site.urls),
-    # users
+    # users 用户
     url(r'^',include('users.urls',namespace='users')),
-    # contents
+    # contents 首页
     url(r'^',include('contents.urls',namespace='contents')),
-    # verifications
+    # verifications 短信 图片验证码
     url(r'^', include('verifications.urls',namespace='verifications')),
-    # oauth
+    # oauth 用户认证
     url(r'^',include('oauth.urls',namespace='oauth')),
-    # address
+    # address 用户地址
     url(r'^',include('areas.urls',namespace='areas')),
     # # tests
     # url(r'^test$',tests.test.as_view()),
-    # goods
+    # goods 商品
     url(r'^', include('goods.urls', namespace='goods')),
     # Haystack 注册
-    url(r'^search/',include('haystack.urls')),
+    url(r'^search/',include('haystack.urls',namespace='search')),
     # carts 购物车
     url(r'^',include('carts.urls',namespace='carts')),
+    # orders 订单
+    url(r'^',include('orders.urls',namespace='orders'))
 ]
