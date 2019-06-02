@@ -3,6 +3,7 @@ from decimal import Decimal
 
 import datetime
 from django import http
+from django.db import transaction
 from django.shortcuts import render
 
 # Create your views here.
@@ -15,6 +16,8 @@ from meiduo_mall.utils.response_code import RETCODE
 from meiduo_mall.utils.views import LoginRequiredMixin, LoginRequiredJSONMixin
 from orders.models import OrderInfo, OrderGoods
 from users.models import Address
+import logging
+logger = logging.getLogger('django')
 
 
 class OrderCommitView(LoginRequiredJSONMixin, View):
@@ -37,7 +40,7 @@ class OrderCommitView(LoginRequiredJSONMixin, View):
             address = Address.objects.get(id=address_id)
         except Address.DoesNotExist:
             return http.HttpResponseForbidden('address_id 参数错误')
-        if pay_method not in [OrderInfo.PAY_METHOD_CHOICES['CASH'], OrderInfo.PAY_METHOD_CHOICES['ALIPAY']]:
+        if pay_method not in [OrderInfo.PAY_METHODS_ENUM['CASH'], OrderInfo.PAY_METHODS_ENUM['ALIPAY']]:
             return http.HttpResponseForbidden('pay_method 参数错误')
         # 3.获取当前用户
         user = request.user
@@ -46,62 +49,98 @@ class OrderCommitView(LoginRequiredJSONMixin, View):
         time_str = time.strftime('%Y%m%d%H%M%S')
         order_id = time_str + '%09d' % user.id
         # pay_method = int(pay_method)
-        order = OrderInfo.objects.create(
-            order_id=order_id,
-            user=user,
-            address=address,
-            total_count=0,
-            total_amount=Decimal('0.00'),
-            freight=Decimal('10.00'),
-            pay_method=pay_method,
-            # 用模型类OrderInfo里面的字典来判断具体对应的值,避免在程序中出现数字
-            status=OrderInfo.ORDER_STATUS_ENUM['UNPAID']
-            if pay_method == OrderInfo.PAY_METHODS_ENUM['ALIPAY']
-            else OrderInfo.ORDER_STATUS_ENUM['UNSEND']
-        )
+        # with下的代码都放在一个事物里面进行
+        with transaction.atomic():
+            save_point = transaction.savepoint()
+            try:
+                # 用户订单表修改
+                order = OrderInfo.objects.create(
+                    order_id=order_id,
+                    user=user,
+                    address=address,
+                    total_count=0,
+                    total_amount=Decimal('0.00'),
+                    freight=Decimal('10.00'),
+                    pay_method=pay_method,
+                    # 用模型类OrderInfo里面的字典来判断具体对应的值,避免在程序中出现数字
+                    status=OrderInfo.ORDER_STATUS_ENUM['UNPAID']
+                    if pay_method == OrderInfo.PAY_METHODS_ENUM['ALIPAY']
+                    else OrderInfo.ORDER_STATUS_ENUM['UNSEND']
+                )
 
-        # 保存订单商品信息
-        # 5.连接redis
-        redis_conn = get_redis_connection('carts')
-        # 6.获取所有的selected的sku_id
-        item_dict = redis_conn.hgetall('carts_%s' % user.id)
-        selected_list = redis_conn.smembers('selected_%s' % user.id)
-        # 7.组建一个sku_id:count字典,count就是用户要买的数量
-        cart = {}
-        for sku_id in selected_list:
-            cart[int(sku_id)] = int(item_dict[sku_id])
-        # 8.获取所有的sku_ids
-        sku_ids = cart.keys()
-        # 9.遍历所有的sku_ids
-        for sku_id in sku_ids:
-            # 10.获取一个sku,添加属性count
-            sku = SKU.objects.get(id=sku_id)
-            sku.count = cart[sku.id]
-            # 11.获取仓库库存,进行比较,如果没有库存,直接进行返回
-            origin_stock = sku.stock
-            origin_sales = sku.sales
-            if sku.count > origin_stock:
-                return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': '仓库库存不足'})
-            # 12.如果有库存进行修改sku库存,销量
-            origin_stock -= sku.count
-            origin_sales += sku.count
-            # 往order goods表中添加数据
-            OrderGoods.objects.create(
-                order=order,
-                sku=sku,
-                count=sku.count,
-                price=sku.price,
-            )
-            # 13.修改spu销量,修改订单信息表OrderInfo里面的订单总数,订单总金额
-            goods = sku.goods
-            goods.sales += sku.count
-            order.total_count += sku.count
-            order.total_amount += Decimal(sku.count * sku.price)
+                # 保存订单商品信息
+                # 5.连接redis
+                redis_conn = get_redis_connection('carts')
+                # 6.获取所有的selected的sku_id
+                item_dict = redis_conn.hgetall('carts_%s' % user.id)
+                selected_list = redis_conn.smembers('selected_%s' % user.id)
+                # 7.组建一个sku_id:count字典,count就是用户要买的数量
+                cart = {}
+                for sku_id in selected_list:
+                    cart[int(sku_id)] = int(item_dict[sku_id])
+                # 8.获取所有的sku_ids
+                sku_ids = cart.keys()
+                # 使用乐观锁进行处理并发的状况
+                # 9.遍历所有的sku_ids
+                for sku_id in sku_ids:
+                    while True:
+                        # 10.获取一个sku,添加属性count
+                        sku = SKU.objects.get(id=sku_id)
+                        sku.count = cart[sku.id]
+                        # 11.获取仓库库存,进行比较,如果没有库存,直接进行返回
+                        origin_stock = sku.stock
+                        origin_sales = sku.sales
+                        if sku.count > origin_stock:
+                            # 如果出现不一致进行回滚
+                            transaction.savepoint_rollback(save_point)
+                            return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': '库存不足'})
+                        # 12.如果有库存进行修改sku库存,销量
+                        # SKU表修改
+                        # sku.stock -= sku.count
+                        # sku.sales += sku.count
+                        # sku.save()
+                        import time
+                        time.sleep(3)
+                        # 使用乐观锁,一步进行更新操作
+                        new_stock = origin_stock - sku.count
+                        new_sales = origin_sales + sku.count
+                        ret = SKU.objects.filter(stock=origin_stock,id=sku.id).update(
+                            stock=new_stock,
+                            sales=new_sales
+                        )
+                        if ret == 0:
+                            continue
+                        # 往order goods表中添加数据
+                        # 订单商品表修改
+                        OrderGoods.objects.create(
+                            order=order,
+                            sku=sku,
+                            count=sku.count,
+                            price=sku.price,
+                        )
+                        # 13.修改spu销量,修改订单信息表OrderInfo里面的订单总数,订单总金额
+                        goods = sku.goods
+                        goods.sales += sku.count
+                        goods.save()
 
-            # 14.修改完进行删除hash和set
-            redis_conn.hdel('carts_%s' % user.id, sku.id)
-            redis_conn.srem('selected_%s' % user.id, sku.id)
+                        order.total_count += sku.count
+                        order.total_amount += Decimal(sku.count * sku.price)
+                        break
+                # 添加邮费和保存订单信息
+                order.total_amount += order.freight
+                order.save()
 
+                # 14.修改完进行删除hash和set
+                redis_conn.hdel('carts_%s' % user.id, *selected_list)
+                redis_conn.srem('selected_%s' % user.id, *selected_list)
+                redis_conn.save()
+            except Exception as e:
+                logger.error(e)
+                # 事物回滚
+                transaction.savepoint_rollback(save_point)
+                return http.JsonResponse({'code':RETCODE.DBERR,'errmsg':'下单失败'})
+            # 如果没有出错,进行提交事物
+            transaction.savepoint_commit(save_point)
         # 15.拼接数据进行返回(code,errmsg,order_id)
         return http.JsonResponse({
             'code': RETCODE.OK,
