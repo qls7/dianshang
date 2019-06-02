@@ -20,6 +20,47 @@ import logging
 logger = logging.getLogger('django')
 
 
+class UserOrderInfoView(LoginRequiredMixin, View):
+    """我的订单"""
+    def get(self, request, page_num):
+        """
+        获取用户订单的所有商品
+        :param request:
+        :param page_num:
+        :return:
+        """
+        # 1.获取user
+        # 2.根据user获取所有订单信息
+        # 3.遍历所有订单,根据订单获取每个订单的所有sku_ids
+        # 订单信息增加支付状态和支付方式
+        # 4.遍历sku_ids,获取每个商品
+        # 5.给每件商品增加count属性
+        # 6.
+        # 7.
+        # 8.
+        # 9.
+        # 10.
+
+
+class OrderSuccessView(LoginRequiredMixin, View):
+    """展示提交订单成功页面"""
+    def get(self, request):
+        """返回订单提交成功页面"""
+        # 1.获取参数
+        order_id = request.GET.get('order_id')
+        payment_amount = request.GET.get('payment_amount')
+        pay_method = request.GET.get('pay_method')
+        # 2.拼接返回
+        context ={
+            'code': RETCODE.OK,
+            'errmsg': 'ok',
+            'order_id': order_id,
+            'payment_amount': payment_amount,
+            'pay_method': pay_method,
+        }
+        return render(request, 'order_success.html',context)
+
+
 class OrderCommitView(LoginRequiredJSONMixin, View):
     """订单提交"""
 

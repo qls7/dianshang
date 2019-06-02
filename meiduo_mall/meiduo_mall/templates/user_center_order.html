@@ -3,13 +3,13 @@
 <head>
 	<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
 	<title>美多商城-我的订单</title>
-	<link rel="stylesheet" type="text/css" href="css/jquery.pagination.css">
-	<link rel="stylesheet" type="text/css" href="css/reset.css">
-	<link rel="stylesheet" type="text/css" href="css/main.css">
-    <script type="text/javascript" src="js/host.js"></script>
-	<script type="text/javascript" src="js/vue-2.5.16.js"></script>
-    <script type="text/javascript" src="js/axios-0.18.0.min.js"></script>
-	<script type="text/javascript" src="js/jquery-1.12.4.min.js"></script>
+	<link rel="stylesheet" type="text/css" href="../static/css/jquery.pagination.css">
+	<link rel="stylesheet" type="text/css" href="../static/css/reset.css">
+	<link rel="stylesheet" type="text/css" href="../static/css/main.css">
+    <script type="text/javascript" src="../static/js/host.js"></script>
+	<script type="text/javascript" src="../static/js/vue-2.5.16.js"></script>
+    <script type="text/javascript" src="../static/js/axios-0.18.0.min.js"></script>
+	<script type="text/javascript" src="../static/js/jquery-1.12.4.min.js"></script>
 </head>
 <body>
 	<div id="app" v-cloak>
@@ -21,15 +21,15 @@
 					欢迎您：<em>张 山</em>
 				</div>
 				<div class="login_btn fl">
-					<a href="../templates/login.html">登录</a>
+					<a href="login.html">登录</a>
 					<span>|</span>
-					<a href="../templates/register.html">注册</a>
+					<a href="register.html">注册</a>
 				</div>
 				<div class="user_link fl">
 					<span>|</span>
-					<a href="../templates/user_center_info.html">用户中心</a>
+					<a href="user_center_info.html">用户中心</a>
 					<span>|</span>
-					<a href="../templates/cart.html">我的购物车</a>
+					<a href="cart.html">我的购物车</a>
 					<span>|</span>
 					<a href="user_center_order.html">我的订单</a>
 				</div>
@@ -38,7 +38,7 @@
 	</div>
 
 	<div class="search_bar clearfix">
-		<a href="../templates/index.html" class="logo fl"><img src="images/logo.png"></a>
+		<a href="index.html" class="logo fl"><img src="../static/images/logo.png"></a>
 		<div class="search_wrap fl">
 			<form method="get" action="/search/" class="search_con">
                 <input type="text" class="input_text fl" name="q" placeholder="搜索商品">
@@ -57,10 +57,10 @@
 		<div class="left_menu_con clearfix">
 			<h3>用户中心</h3>
 			<ul>
-				<li><a href="../templates/user_center_info.html">· 个人信息</a></li>
+				<li><a href="user_center_info.html">· 个人信息</a></li>
 				<li><a href="user_center_order.html" class="active">· 全部订单</a></li>
-				<li><a href="../templates/user_center_site.html">· 收货地址</a></li>
-				<li><a href="../templates/user_center_pass.html">· 修改密码</a></li>
+				<li><a href="user_center_site.html">· 收货地址</a></li>
+				<li><a href="user_center_pass.html">· 修改密码</a></li>
 			</ul>
 		</div>
 		<div class="right_content clearfix">
@@ -75,13 +75,13 @@
 					<tr>
 						<td width="55%">
 							<ul class="order_goods_list clearfix">					
-								<li class="col01"><img src="images/goods/goods001.jpg"></li>
+								<li class="col01"><img src="../static/images/goods/goods001.jpg"></li>
 								<li class="col02"><span>360手机 N6 Pro 全网通</span><em>2688.00元</em></li>
 								<li class="col03">1</li>
 								<li class="col04">2688.00元</li>	
 							</ul>
 							<ul class="order_goods_list clearfix">					
-								<li class="col01"><img src="images/goods/goods001.jpg"></li>
+								<li class="col01"><img src="../static/images/goods/goods001.jpg"></li>
 								<li class="col02"><span>360手机 N6 Pro 全网通</span><em>2688.00元</em></li>
 								<li class="col03">1</li>
 								<li class="col04">2688.00元</li>	
@@ -89,7 +89,7 @@
 						</td>
 						<td width="15%">5276.00元<br>含运费：10.00元</td>
 						<td width="15%">已付款</td>
-						<td width="15%"><a href="goods_judge.html" class="oper_btn">待评价</a></td>
+						<td width="15%"><a href="../static/goods_judge.html" class="oper_btn">待评价</a></td>
 					</tr>
 				</tbody>
 			</table>
@@ -103,13 +103,13 @@
 					<tr>
 						<td width="55%">
 							<ul class="order_goods_list clearfix">					
-								<li class="col01"><img src="images/goods/goods002.jpg"></li>
+								<li class="col01"><img src="../static/images/goods/goods002.jpg"></li>
 								<li class="col02"><span>iphoneX N6 Pro 全网通</span><em>7899.00元</em></li>	
 								<li class="col03">1</li>
 								<li class="col04">7899.00元</li>	
 							</ul>
 							<ul class="order_goods_list clearfix">					
-								<li class="col01"><img src="images/goods/goods002.jpg"></li>
+								<li class="col01"><img src="../static/images/goods/goods002.jpg"></li>
 								<li class="col02"><span>iphoneX N6 Pro 全网通</span><em>7899.00元</em></li>	
 								<li class="col03">1</li>
 								<li class="col04">7899.00元</li>	
@@ -143,8 +143,8 @@
 		<p>电话：010-****888    京ICP备*******8号</p>
 	</div>
 	</div>
-	<script type="text/javascript" src="js/jquery.pagination.min.js"></script>
-	<script type="text/javascript" src="js/user_center_order.js"></script>
+	<script type="text/javascript" src="../static/js/jquery.pagination.min.js"></script>
+	<script type="text/javascript" src="../static/js/user_center_order.js"></script>
 	<script>
         $(function () {
             $('#pagination').pagination({
