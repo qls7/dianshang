@@ -48,9 +48,12 @@ INSTALLED_APPS = [
     'goods',
     'carts',
     'orders',
+    'payment',
 
     # 全文检索
     'haystack',
+    # 定时任务
+    'django_crontab',
 
 ]
 
@@ -317,3 +320,42 @@ HAYSTACK_SIGNAL_PROCESSOR = 'haystack.signals.RealtimeSignalProcessor'
 
 # 可以在 dev.py 中添加如下代码, 用于决定每页显示数据条数:
 HAYSTACK_SEARCH_RESULTS_PER_PAGE = 5
+
+# ########支付宝SDK配置参数 ###############################################
+
+ALIPAY_APPID = '2016092800617435'
+ALIPAY_DEBUG = True
+ALIPAY_URL = 'https://openapi.alipaydev.com/gateway.do'
+ALIPAY_RETURN_URL = 'http://www.meiduo.site:8000/payment/status/'
+
+# 买家账号
+# vhghjj8915@sandbox.com
+# 登录密码
+# 111111
+# 支付密码
+# 111111
+
+# 商家账号
+# tfkbiy5398@sandbox.com
+# 商户UID
+# 2088102177682002
+# 登录密码
+# 111111
+
+
+# ########定时器 设置 ###############################################
+
+CRONJOBS = [
+    # 每1分钟生成一次首页静态文件,分,时,日,月,周
+    ('*/1 * * * *', 'contents.crons.generate_static_index_html', '>> ' + os.path.join(os.path.dirname(BASE_DIR), 'logs/crontab.log'))
+]
+# 在定时任务中，如果出现非英文字符，会出现字符异常错误
+CRONTAB_COMMAND_PREFIX = 'LANG_ALL=zh_cn.UTF-8'
+# 添加定时任务到系统中
+# $ python manage.py crontab add
+
+# 显示已激活的定时任务
+# $ python manage.py crontab show
+
+# 移除定时任务
+# $ python manage.py crontab remove

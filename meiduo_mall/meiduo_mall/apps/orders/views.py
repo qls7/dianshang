@@ -1,8 +1,8 @@
 import json
 from decimal import Decimal
 
-import datetime
 from django import http
+from django.core.paginator import Paginator, EmptyPage
 from django.db import transaction
 from django.shortcuts import render
 
@@ -20,6 +20,51 @@ import logging
 logger = logging.getLogger('django')
 
 
+class OrderCommentView(LoginRequiredMixin, View):
+    """订单商品评价"""
+    def get(self, request):
+        """
+        订单商品评价
+        :param request:
+        :return:
+        """
+        # 1.获取参数
+        order_id = request.GET.get('order_id')
+        # 2.校验参数
+        try:
+            order = OrderInfo.objects.get(order_id=order_id, user=request.user)
+        except OrderInfo.DoesNotExist:
+            return http.HttpResponseForbidden('订单不存在')
+        # 3.根据订单编号获取所有的商品行
+        try:
+            uncomment_goods = order.skus.filter(is_commented=False, order_id=order_id)
+        except OrderInfo.DoesNotExist:
+            return http.HttpResponseForbidden('没有未评价的商品')
+        # 构造带评价商品数据
+        uncomment_goods_list = []
+        # 4.遍历每个商品行, 拿到每行具体的商品
+        for goods in uncomment_goods:
+            sku = goods.sku
+            uncomment_goods_list.append({
+                'order_id': order_id,
+                'sku_id': sku.id,
+                'name': sku.name,
+                'price': str(goods.price),
+                'default': sku.default_image_url,
+                'comment': goods.comment,
+                'score': goods.score,
+                'is_anonymous': str(goods.is_anonymous),
+            })
+        # 5.渲染模板
+        context = {
+            'code': RETCODE.OK,
+            'errmsg': 'ok',
+            'uncomment_goods_list': uncomment_goods_list
+        }
+        # 6.返回
+        return render(request, 'goods_judge.html', context)
+
+
 class UserOrderInfoView(LoginRequiredMixin, View):
     """我的订单"""
     def get(self, request, page_num):
@@ -30,16 +75,45 @@ class UserOrderInfoView(LoginRequiredMixin, View):
         :return:
         """
         # 1.获取user
+        user = request.user
         # 2.根据user获取所有订单信息
+        orders = user.orderinfo_set.all().order_by('-create_time')
         # 3.遍历所有订单,根据订单获取每个订单的所有sku_ids
-        # 订单信息增加支付状态和支付方式
-        # 4.遍历sku_ids,获取每个商品
-        # 5.给每件商品增加count属性
-        # 6.
-        # 7.
-        # 8.
-        # 9.
-        # 10.
+        for order in orders:
+            # 绑定订单支付状态
+            order.status_name = OrderInfo.ORDER_STATUS_CHOICES[order.status-1][1]
+            # 绑定订单支付方式
+            order.pay_method_name = OrderInfo.PAY_METHOD_CHOICES[order.pay_method-1][1]
+            # 把每行的订单列表记录
+            order.sku_list = []
+            # 根据订单的商品信息获取对应的订单sku
+            # 根据需求返回每页的具体数据
+            order_goods = order.skus.all()
+            for order_good in order_goods:
+                sku = order_good.sku
+                sku.count = order_good.count
+                sku.amount = sku.price * sku.count
+                order.sku_list.append(sku)
+        # 6.增加分页功能
+        page_num = int(page_num)
+        try:
+            # 导入Paginator,创建分页对象(指定分页对象集和每页显示的个数)
+            paginator = Paginator(orders,2)
+            # 根据页码返回每页的内容
+            page_orders = paginator.page(page_num)
+            # 返回总页数,paginator.num_pages
+            total_page = paginator.num_pages
+        except EmptyPage:
+            # 返回页面不存在的异常
+            return http.HttpResponseForbidden('订单不存在')
+        # 7.拼接返回
+        context = {
+            'page_orders': page_orders,
+            'total_page': total_page,
+            'page_num': page_num
+        }
+
+        return render(request, 'user_center_order.html', context)
 
 
 class OrderSuccessView(LoginRequiredMixin, View):

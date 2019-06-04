@@ -40,5 +40,7 @@ urlpatterns = [
     # carts 购物车
     url(r'^',include('carts.urls',namespace='carts')),
     # orders 订单
-    url(r'^',include('orders.urls',namespace='orders'))
+    url(r'^',include('orders.urls',namespace='orders')),
+    # payment
+    url(r'^', include('payment.urls')),
 ]
