@@ -8,11 +8,48 @@ from django.utils import timezone
 from django.views import View
 import logging
 
+from orders.models import OrderGoods
+
 logger = logging.getLogger('django')
 from goods.models import GoodsCategory, SKU, GoodsVisitCount
 from goods.utils import get_categories, get_breadcrumb, get_goods_and_spec
 from meiduo_mall.utils.response_code import RETCODE
 
+
+class GoodsCommentView(View):
+    """订单商品评价信息"""
+
+    def get(self, request, sku_id):
+        """
+        获取订单评论信息并返回
+        :param request:
+        :param sku_id:
+        :return:
+        """
+        # 1.获取参数
+        try:
+            goods =OrderGoods.objects.filter(sku_id=sku_id, is_commented=True)
+        except OrderGoods.DoesNotExist:
+            return http.HttpResponseForbidden('sku_id 参数错误')
+        # 2.校验参数
+
+        # 3.链接数据库
+        comment_list = []
+        for good in goods:
+            username = good.order.user.username
+            comment_list.append({
+                'username': username[0] + '****' + username[-1] if good.is_anonymous else good.is_anonymous,
+                'comment': good.comment,
+                'score': good.score,
+            })
+        # 4.查询数据
+        # 5.拼接数据返回
+        context = {
+            'code': RETCODE.OK,
+            'errmsg': 'ok',
+            'comment_list': comment_list
+        }
+        return http.JsonResponse(context)
 
 class DetailVisitView(View):
     """统计分类商品访问量"""

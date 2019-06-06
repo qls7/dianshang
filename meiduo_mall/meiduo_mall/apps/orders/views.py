@@ -17,11 +17,13 @@ from meiduo_mall.utils.views import LoginRequiredMixin, LoginRequiredJSONMixin
 from orders.models import OrderInfo, OrderGoods
 from users.models import Address
 import logging
+
 logger = logging.getLogger('django')
 
 
 class OrderCommentView(LoginRequiredMixin, View):
     """订单商品评价"""
+
     def get(self, request):
         """
         订单商品评价
@@ -50,7 +52,7 @@ class OrderCommentView(LoginRequiredMixin, View):
                 'sku_id': sku.id,
                 'name': sku.name,
                 'price': str(goods.price),
-                'default': sku.default_image_url,
+                'default_image_url': sku.default_image_url,
                 'comment': goods.comment,
                 'score': goods.score,
                 'is_anonymous': str(goods.is_anonymous),
@@ -64,9 +66,56 @@ class OrderCommentView(LoginRequiredMixin, View):
         # 6.返回
         return render(request, 'goods_judge.html', context)
 
+    def post(self, request):
+        """获取参数修改评论页面的内容"""
+        # 1.获取参数
+        json_dict = json.loads(request.body.decode())
+        order_id = json_dict.get('order_id')
+        sku_id = json_dict.get('sku_id')
+        score = json_dict.get('score')
+        comment = json_dict.get('comment')
+        is_anonymous = json_dict.get('is_anonymous')
+        # 2.校验参数
+        try:
+            # 先在订单信息表中判断该订单是否是该用户的订单
+            order_info = OrderInfo.objects.get(order_id=order_id, user=request.user)
+        except OrderInfo.DoesNotExist:
+            return http.HttpResponseForbidden('order_id 参数错误')
+        try:
+            # 再在sku表中判断该商品是否存在
+            sku = SKU.objects.get(id=sku_id)
+        except SKU.DoesNotExist:
+            return http.HttpResponseForbidden('sku_id 参数错误')
+        if is_anonymous:
+            if not isinstance(is_anonymous, bool):
+                return http.HttpResponseForbidden('is_anonymous 参数错误')
+        # 3.写入数据库
+        try:
+            OrderGoods.objects.filter(order_id=order_id, sku_id=sku_id).update(
+                comment=comment,
+                score=score,
+                is_anonymous=is_anonymous,
+                is_commented=True
+            )
+        except Exception:
+            return http.HttpResponseForbidden('评论失败')
+        sku.comments += 1
+        sku.save()
+
+        sku.goods.comments += 1
+        sku.goods.save()
+
+        # 修改订单状态
+        if OrderGoods.objects.filter(order_id=order_id, is_commented=False).count() == 0:
+            order_info.status = OrderInfo.ORDER_STATUS_ENUM['FINISHED']
+            order_info.save()
+        # 4.进行返回
+        return http.JsonResponse({'code': RETCODE.OK, 'errmsg': 'ok'})
+
 
 class UserOrderInfoView(LoginRequiredMixin, View):
     """我的订单"""
+
     def get(self, request, page_num):
         """
         获取用户订单的所有商品
@@ -81,9 +130,9 @@ class UserOrderInfoView(LoginRequiredMixin, View):
         # 3.遍历所有订单,根据订单获取每个订单的所有sku_ids
         for order in orders:
             # 绑定订单支付状态
-            order.status_name = OrderInfo.ORDER_STATUS_CHOICES[order.status-1][1]
+            order.status_name = OrderInfo.ORDER_STATUS_CHOICES[order.status - 1][1]
             # 绑定订单支付方式
-            order.pay_method_name = OrderInfo.PAY_METHOD_CHOICES[order.pay_method-1][1]
+            order.pay_method_name = OrderInfo.PAY_METHOD_CHOICES[order.pay_method - 1][1]
             # 把每行的订单列表记录
             order.sku_list = []
             # 根据订单的商品信息获取对应的订单sku
@@ -98,7 +147,7 @@ class UserOrderInfoView(LoginRequiredMixin, View):
         page_num = int(page_num)
         try:
             # 导入Paginator,创建分页对象(指定分页对象集和每页显示的个数)
-            paginator = Paginator(orders,2)
+            paginator = Paginator(orders, 2)
             # 根据页码返回每页的内容
             page_orders = paginator.page(page_num)
             # 返回总页数,paginator.num_pages
@@ -118,6 +167,7 @@ class UserOrderInfoView(LoginRequiredMixin, View):
 
 class OrderSuccessView(LoginRequiredMixin, View):
     """展示提交订单成功页面"""
+
     def get(self, request):
         """返回订单提交成功页面"""
         # 1.获取参数
@@ -125,14 +175,14 @@ class OrderSuccessView(LoginRequiredMixin, View):
         payment_amount = request.GET.get('payment_amount')
         pay_method = request.GET.get('pay_method')
         # 2.拼接返回
-        context ={
+        context = {
             'code': RETCODE.OK,
             'errmsg': 'ok',
             'order_id': order_id,
             'payment_amount': payment_amount,
             'pay_method': pay_method,
         }
-        return render(request, 'order_success.html',context)
+        return render(request, 'order_success.html', context)
 
 
 class OrderCommitView(LoginRequiredJSONMixin, View):
@@ -214,12 +264,10 @@ class OrderCommitView(LoginRequiredJSONMixin, View):
                         # sku.stock -= sku.count
                         # sku.sales += sku.count
                         # sku.save()
-                        import time
-                        time.sleep(3)
                         # 使用乐观锁,一步进行更新操作
                         new_stock = origin_stock - sku.count
                         new_sales = origin_sales + sku.count
-                        ret = SKU.objects.filter(stock=origin_stock,id=sku.id).update(
+                        ret = SKU.objects.filter(stock=origin_stock, id=sku.id).update(
                             stock=new_stock,
                             sales=new_sales
                         )
@@ -253,7 +301,7 @@ class OrderCommitView(LoginRequiredJSONMixin, View):
                 logger.error(e)
                 # 事物回滚
                 transaction.savepoint_rollback(save_point)
-                return http.JsonResponse({'code':RETCODE.DBERR,'errmsg':'下单失败'})
+                return http.JsonResponse({'code': RETCODE.DBERR, 'errmsg': '下单失败'})
             # 如果没有出错,进行提交事物
             transaction.savepoint_commit(save_point)
         # 15.拼接数据进行返回(code,errmsg,order_id)
