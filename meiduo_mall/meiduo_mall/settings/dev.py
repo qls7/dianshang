@@ -110,7 +110,7 @@ WSGI_APPLICATION = 'meiduo_mall.wsgi.application'
 # ########配置mysql#############################################
 
 DATABASES = {
-    'default': {
+    'default': { # 写 (主机)
         'ENGINE': 'django.db.backends.mysql',
         'HOST': '127.0.0.1',
         'PORT': 3306,
@@ -118,7 +118,17 @@ DATABASES = {
         'PASSWORD': '123456',
         'NAME': 'meiduo_mall',
     },
+    'slave': {  # 读（从机）
+        'ENGINE': 'django.db.backends.mysql',
+        'HOST': '127.0.0.1',
+        'PORT': 8306,
+        'USER': 'root',
+        'PASSWORD': 'mysql',
+        'NAME': 'meiduo_mall',
+    }
 }
+DATABASE_ROUTERS = ['meiduo_mall.utils.db_router.MasterSlaveDBRouter']
+
 
 # Password validation
 # https://docs.djangoproject.com/en/1.11/ref/settings/#auth-password-validators
@@ -359,3 +369,8 @@ CRONTAB_COMMAND_PREFIX = 'LANG_ALL=zh_cn.UTF-8'
 
 # 移除定时任务
 # $ python manage.py crontab remove
+
+# ########Nginx服务器的配置 ###############################################
+
+# 配置收集静态文件存放的目录
+STATIC_ROOT = os.path.join(os.path.dirname(BASE_DIR),'static')

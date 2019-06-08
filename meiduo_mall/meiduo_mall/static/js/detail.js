@@ -18,11 +18,11 @@ var vm = new Vue({
         },
         comments: [],
         score_classes: {
-            1: 'stars_one',
-            2: 'stars_two',
-            3: 'stars_three',
-            4: 'stars_four',
-            5: 'stars_five',
+            1: 'stars_1',
+            2: 'stars_2',
+            3: 'stars_3',
+            4: 'stars_4',
+            5: 'stars_5',
         },
         cart_total_count: 0, // 购物车总数量
         carts: [], // 购物车数据,

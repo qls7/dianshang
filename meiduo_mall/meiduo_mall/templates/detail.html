@@ -328,7 +328,10 @@
                 <li @click="on_tab_content('detail')" :class="tab_content.detail?'active':''">商品详情</li>
                 <li @click="on_tab_content('pack')" :class="tab_content.pack?'active':''">规格与包装</li>
                 <li @click="on_tab_content('service')" :class="tab_content.service?'active':''">售后服务</li>
-<li @click="on_tab_content('comment')" :class="tab_content.comment?'active':''">商品评价([[ comments.length ]])</li>            </ul>
+                <li @click="on_tab_content('comment')" :class="tab_content.comment?'active':''">商品评价([[ comments.length
+                    ]])
+                </li>
+            </ul>
             <div @click="on_tab_content('detail')" class="tab_content" :class="tab_content.detail?'current':''">
                 <dl>
                     <dt>商品详情：</dt>
@@ -348,7 +351,7 @@
                             <b>[[comment.username]]</b>
                         </div>
                         <div class="judge_info fl">
-                            <div :class="comment.score_class"></div>
+                            <div :class="comment.score_class" ></div>
                             <div class="judge_detail">[[comment.comment]]</div>
                         </div>
                     </li>

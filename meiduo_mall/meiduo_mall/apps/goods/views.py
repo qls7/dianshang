@@ -28,7 +28,8 @@ class GoodsCommentView(View):
         """
         # 1.获取参数
         try:
-            goods =OrderGoods.objects.filter(sku_id=sku_id, is_commented=True)
+            goods = OrderGoods.objects.filter(
+                sku_id=sku_id, is_commented=True).order_by('-create_time')[:30]
         except OrderGoods.DoesNotExist:
             return http.HttpResponseForbidden('sku_id 参数错误')
         # 2.校验参数
@@ -38,7 +39,7 @@ class GoodsCommentView(View):
         for good in goods:
             username = good.order.user.username
             comment_list.append({
-                'username': username[0] + '****' + username[-1] if good.is_anonymous else good.is_anonymous,
+                'username': username[0] + '****' + username[-1] if good.is_anonymous else username,
                 'comment': good.comment,
                 'score': good.score,
             })
@@ -47,9 +48,10 @@ class GoodsCommentView(View):
         context = {
             'code': RETCODE.OK,
             'errmsg': 'ok',
-            'comment_list': comment_list
+            'goods_comment_list': comment_list
         }
         return http.JsonResponse(context)
+
 
 class DetailVisitView(View):
     """统计分类商品访问量"""
