@@ -48,7 +48,8 @@ class GoodsCommentView(View):
         context = {
             'code': RETCODE.OK,
             'errmsg': 'ok',
-            'goods_comment_list': comment_list
+            'goods_comment_list': comment_list,
+            'desc_detail': goods.desc_detail
         }
         return http.JsonResponse(context)
 
