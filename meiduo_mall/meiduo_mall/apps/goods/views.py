@@ -49,7 +49,7 @@ class GoodsCommentView(View):
             'code': RETCODE.OK,
             'errmsg': 'ok',
             'goods_comment_list': comment_list,
-            'desc_detail': goods.desc_detail
+
         }
         return http.JsonResponse(context)
 
@@ -107,14 +107,20 @@ class DetailView(View):
         """
         # 获取商品频道分类
         categories = get_categories()
+        sku = SKU.objects.get(id=sku_id)
+        category = sku.category
         # 获取商品sku规格
         data = get_goods_and_spec(sku_id, request)
+
+        # 根据商品类别id获取商品导航页
+        breadcrumb = get_breadcrumb(category)
         # 组合参数
         context = {
             'categories': categories,
             'goods': data.get('goods'),
             'sku': data.get('sku'),
-            'specs': data.get('goods_specs')
+            'specs': data.get('goods_specs'),
+            'breadcrumb': breadcrumb,
         }
         # 进行返回
         return render(request, 'detail.html', context=context)

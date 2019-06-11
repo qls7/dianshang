@@ -103,6 +103,11 @@ class Goods(BaseModel):
     # 这组商品的评价数
     comments = models.IntegerField(default=0, verbose_name='评价数')
 
+    desc_detail = models.TextField(default='', verbose_name='商品详情')
+
+    desc_pack = models.TextField(default='', verbose_name='规格与包装')
+
+    desc_service = models.TextField(default='', verbose_name='售后服务')
     class Meta:
         db_table = 'tb_goods'
         verbose_name = '商品'

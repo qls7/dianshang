@@ -46,7 +46,7 @@ var vm = new Vue({
                 .then(response => {
                     this.hot_skus = response.data.hot_skus;
                     for(var i=0; i<this.hot_skus.length; i++){
-                        this.hot_skus[i].url = '/goods/' + this.hot_skus[i].id + '.html';
+                        this.hot_skus[i].url = '/detail/' + this.hot_skus[i].id;
                     }
                 })
                 .catch(error => {
